@@ -2,10 +2,10 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
-
   <!-- Akka.NET Package Versions -->
   <ItemGroup>
     <PackageVersion Include="Akka.Hosting" Version="1.5.17.1" />
     <PackageVersion Include="Akka.Streams" Version="1.5.17.1" />
+    <PackageVersion Include="Spectre.Console.Cli" Version="0.48.0" />
   </ItemGroup>
 </Project>
