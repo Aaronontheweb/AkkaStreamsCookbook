@@ -1,5 +1,7 @@
-# Akka.NET Streams Template
+# Akka.NET Streams Cookbook
 
-This is a simple template designed to incorporate [Akka.NET](https://getakka.net/)'s [Akka.Streams APIs](https://getakka.net/articles/streams/introduction.html) into a local console template.
+This is a repository of some samples and formulas for working with [Akka.NET Streams](https://petabridge.com/blog/introduction-akkadotnet-streams/).
 
-See https://github.com/akkadotnet/akkadotnet-templates/blob/dev/docs/Akka.Streams.Cookbook.md for complete and current documentation on this template.
+* [`StreamRefs` - Working with Akka.Streams Over the Network](/StreamRefs/README.md) - also uses [Akka.Hosting](https://github.com/akkadotnet/Akka.Hosting) and [Spectre.Console](https://spectreconsole.net/)!
+
+Copyright 2015-2024 Petabridge, LLC.
