@@ -85,6 +85,12 @@ public sealed class MetricAggregator : ReceiveActor
             .Run(_materializer);
     }
 
+    protected override void PostStop()
+    {
+        // shut down the graph (which will shut down anyway since they're all children of this actor)
+        _cancellation.Cancel();
+    }
+
     public sealed class RequestMetricsFeed
     {
         private RequestMetricsFeed()
