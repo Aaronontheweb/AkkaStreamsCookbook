@@ -18,7 +18,8 @@ public sealed class CpuCollector : ReceiveActor, IWithTimers
     private readonly ILoggingAdapter _log = Context.GetLogger();
     private readonly IActorRef _metricAggregator;
 
-    private DateTime _lastMeasurement = DateTime.UtcNow;
+    private double _lastCpuUsage = 0.0;
+    private DateTime _lastMeasurementTime = DateTime.UtcNow;
 
     public CpuCollector(IActorRef metricAggregator)
     {
@@ -29,15 +30,17 @@ public sealed class CpuCollector : ReceiveActor, IWithTimers
             if (cpuUsage.HasValue)
             {
                 // convert the total microseconds to millicores
-                var interval = DateTime.UtcNow - _lastMeasurement;
+                var interval = DateTime.UtcNow - _lastMeasurementTime;
+                var usageSinceLastMeasurement = cpuUsage.Value.TotalMicroSeconds - _lastCpuUsage;
                 if (interval.TotalMilliseconds > 0)
                 {
-                    var millicoreUsage = cpuUsage.Value.TotalMicroSeconds / interval.TotalSeconds * 0.001;
+                    var millicoreUsage = usageSinceLastMeasurement / interval.TotalSeconds * 0.001;
                     _log.Info("CPU usage: {0} mc", millicoreUsage);
                     _metricAggregator.Tell(new CpuUpdate(millicoreUsage, DateTime.UtcNow.Ticks));
+                    _lastCpuUsage = cpuUsage.Value.TotalMicroSeconds;
                 }
 
-                _lastMeasurement = DateTime.UtcNow;
+                _lastMeasurementTime = DateTime.UtcNow;
             }
             else
             {
