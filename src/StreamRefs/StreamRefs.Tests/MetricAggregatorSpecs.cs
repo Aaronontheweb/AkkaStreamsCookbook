@@ -38,7 +38,7 @@ public class MetricAggregatorSpecs : TestKit
         var sourceRef = await sourceRefTask;
         
         // act
-        aggregator.Tell(MetricAggregator.RequestMetricsFeed.Instance);
+        aggregator.Tell(MetricAggregator.RequestMetricsFeed.Instance, TestActor);
         var metricFeed = await ExpectMsgAsync<MetricAggregator.MetricsFeed>();
         
         aggregator.Tell(new MetricCommands.PushMetrics(new SubscriberId("fake"), new NodeAddress("localhost", 2001), sourceRef));
