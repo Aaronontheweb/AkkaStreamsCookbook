@@ -3,7 +3,21 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Streams.Cookbook.App", "src\Akka.Streams.Cookbook.App\Akka.Streams.Cookbook.App.csproj", "{7EB7F53A-9A94-48EB-A7D9-D7D93DE0CEB4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamRefs.MetricsCollector", "src\StreamRefs\StreamRefs.MetricsCollector\StreamRefs.MetricsCollector.csproj", "{51894F6F-C095-4A09-A2E7-A98BB5766971}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{CD02DF5B-BA79-4CFF-9716-AC182D81F29F}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+		Directory.Packages.props = Directory.Packages.props
+		global.json = global.json
+		nuget.config = nuget.config
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "StreamRefs", "StreamRefs", "{39B771C9-D3A1-4483-AFC7-193E356665B5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamRefs.Shared", "src\StreamRefs\StreamRefs.Shared\StreamRefs.Shared.csproj", "{9FF11D1B-F4F7-439C-ADFA-0B5C47C707B1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamRefs.Agent", "src\StreamRefs\StreamRefs.Agent\StreamRefs.Agent.csproj", "{623CDD47-295C-40C1-AEA0-3D63C016CC29}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,9 +28,22 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{7EB7F53A-9A94-48EB-A7D9-D7D93DE0CEB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7EB7F53A-9A94-48EB-A7D9-D7D93DE0CEB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7EB7F53A-9A94-48EB-A7D9-D7D93DE0CEB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7EB7F53A-9A94-48EB-A7D9-D7D93DE0CEB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51894F6F-C095-4A09-A2E7-A98BB5766971}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51894F6F-C095-4A09-A2E7-A98BB5766971}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51894F6F-C095-4A09-A2E7-A98BB5766971}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51894F6F-C095-4A09-A2E7-A98BB5766971}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9FF11D1B-F4F7-439C-ADFA-0B5C47C707B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FF11D1B-F4F7-439C-ADFA-0B5C47C707B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9FF11D1B-F4F7-439C-ADFA-0B5C47C707B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9FF11D1B-F4F7-439C-ADFA-0B5C47C707B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{623CDD47-295C-40C1-AEA0-3D63C016CC29}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{623CDD47-295C-40C1-AEA0-3D63C016CC29}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{623CDD47-295C-40C1-AEA0-3D63C016CC29}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{623CDD47-295C-40C1-AEA0-3D63C016CC29}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{51894F6F-C095-4A09-A2E7-A98BB5766971} = {39B771C9-D3A1-4483-AFC7-193E356665B5}
+		{9FF11D1B-F4F7-439C-ADFA-0B5C47C707B1} = {39B771C9-D3A1-4483-AFC7-193E356665B5}
+		{623CDD47-295C-40C1-AEA0-3D63C016CC29} = {39B771C9-D3A1-4483-AFC7-193E356665B5}
 	EndGlobalSection
 EndGlobal
