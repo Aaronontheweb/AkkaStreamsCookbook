@@ -20,8 +20,8 @@ public sealed class CpuCollector : ReceiveActor, IWithTimers
 
     public sealed record CpuUpdate(double CpuUsage, long TimeStamp);
 
-    public ITimerScheduler Timers { get; set; }
-    
+    public ITimerScheduler Timers { get; set; } = null!;
+
     private DateTime _lastMeasurement = DateTime.UtcNow;
     private readonly IActorRef _metricAggregator;
     private readonly ILoggingAdapter _log = Context.GetLogger();

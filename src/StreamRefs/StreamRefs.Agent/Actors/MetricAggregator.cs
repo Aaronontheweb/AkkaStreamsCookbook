@@ -14,8 +14,8 @@ public class MetricAggregator : ReceiveActor, IWithStash, IWithTimers
     private readonly ILoggingAdapter _log = Context.GetLogger();
     private readonly NodeAddress _nodeAddress;
     private readonly IMaterializer _materializer = ActorMaterializer.Create(Context);
-    public IStash Stash { get; set; }
-    public ITimerScheduler Timers { get; set; }
+    public IStash Stash { get; set; } = null!;
+    public ITimerScheduler Timers { get; set; } = null!;
 
     // our Source we're going to use to stream metrics to the collector
     private IActorRef? _metricSource;

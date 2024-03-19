@@ -18,7 +18,7 @@ public enum MetricMeasure
 
 public record struct MetricEvent(NodeAddress Node, long TimeStamp, MetricMeasure Measure, double Value);
 
-public readonly struct SubscriberId(string Id);
+public record struct SubscriberId(string Id);
 
 public interface ISubscriptionCommand
 {

@@ -12,6 +12,7 @@ using Akka.Hosting;
 using Akka.Streams;
 using Akka.Streams.Dsl;
 using StreamRefs.Shared;
+using Debug = System.Diagnostics.Debug;
 
 namespace StreamRefs.MetricsCollector.Actors;
 
@@ -62,6 +63,7 @@ public sealed class MetricAggregator : ReceiveActor
         Receive<RequestMetricsFeed>(_ =>
         {
             _log.Debug("Received request for metrics feed from {0}", Sender);
+            Debug.Assert(_metricsReader != null, nameof(_metricsReader) + " != null");
             Sender.Tell(new MetricsFeed(_metricsReader));
         });
         
