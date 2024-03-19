@@ -1,3 +1,9 @@
+// -----------------------------------------------------------------------
+// <copyright file="TimeHelpers.cs" company="Petabridge, LLC">
+//       Copyright (C) 2015 - 2024 Petabridge, LLC <https://petabridge.com>
+// </copyright>
+// -----------------------------------------------------------------------
+
 using System.Runtime.CompilerServices;
 
 namespace StreamRefs.MetricsCollector;
@@ -5,7 +11,9 @@ namespace StreamRefs.MetricsCollector;
 public static class TimeHelpers
 {
     public static string PrettyPrint(this DateTime time)
-        => (DateTime.UtcNow - time).ToElapsed();
+    {
+        return (DateTime.UtcNow - time).ToElapsed();
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string ToElapsed(this TimeSpan time)

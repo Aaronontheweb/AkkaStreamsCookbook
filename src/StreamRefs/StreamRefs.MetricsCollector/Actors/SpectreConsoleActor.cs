@@ -1,6 +1,6 @@
 ﻿// -----------------------------------------------------------------------
-//  <copyright file="SpectreConsoleActor.cs" company="Akka.NET Project">
-//      Copyright (C) 2013-2024 .NET Foundation <https://github.com/akkadotnet/akka.net>
+// <copyright file="SpectreConsoleActor.cs" company="Petabridge, LLC">
+//       Copyright (C) 2015 - 2024 Petabridge, LLC <https://petabridge.com>
 // </copyright>
 // -----------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ namespace StreamRefs.MetricsCollector.Actors;
 public record struct MetricData
 {
     public double Cpu { get; init; }
-    
+
     public DateTime LastUpdated { get; init; }
 }
 
@@ -34,28 +34,19 @@ public static class SpectreConsoleActorExtensions
 }
 
 /// <summary>
-/// This actor is responsible for rendering the metrics to the console.
+///     This actor is responsible for rendering the metrics to the console.
 /// </summary>
 public sealed class SpectreConsoleActor : ReceiveActor
 {
     private readonly IActorRef _metricAggregator;
     private ChannelReader<MetricEvent>? _channelReader;
 
-    private class Run
-    {
-        private Run()
-        {
-            
-        }
-        public static readonly Run Instance = new();
-    }
-    
     public SpectreConsoleActor(IActorRef metricAggregator)
     {
         _metricAggregator = metricAggregator;
         WaitingForMetrics();
     }
-    
+
     private void WaitingForMetrics()
     {
         Receive<MetricAggregator.MetricsFeed>(feed =>
@@ -65,14 +56,14 @@ public sealed class SpectreConsoleActor : ReceiveActor
             Self.Tell(Run.Instance);
         });
     }
-    
+
     private void Running()
     {
         Receive<Run>(feed =>
         {
             var table = new Table().Centered().BorderColor(Color.Grey);
             table.AddColumn("Address").AddColumn("Last Update").AddColumn("CPU");
-            
+
             AnsiConsole.MarkupLine("Press [yellow]CTRL+C[/] to exit");
             AnsiConsole.Live(table)
                 .AutoClear(true)
@@ -84,26 +75,22 @@ public sealed class SpectreConsoleActor : ReceiveActor
 
                     table.AddEmptyRow();
                     ctx.Refresh();
-                    
-                    await foreach(var c in _channelReader!.ReadAllAsync())
+
+                    await foreach (var c in _channelReader!.ReadAllAsync())
                     {
                         ProcessEvent(c, metrics);
                         table.Rows.Clear();
-                        
+
                         // if we've had any nodes without an update in the last 60 seconds, remove them
                         var now = DateTime.UtcNow;
                         var toRemove = metrics.Where(x => (now - x.Value.LastUpdated).TotalSeconds > 60).ToList();
-                        foreach (var (node, _) in toRemove)
-                        {
-                            metrics.Remove(node);
-                        }
-                        
+                        foreach (var (node, _) in toRemove) metrics.Remove(node);
+
                         foreach (var (node, data) in metrics)
-                        {
                             // format data.Cpu into a string with only up to 2 numbers after decimal point
-                            table.AddRow($"{node.Host}:{node.Port}",data.LastUpdated.PrettyPrint(),  $"{data.Cpu:F2} mc");
-                        }
-                        
+                            table.AddRow($"{node.Host}:{node.Port}", data.LastUpdated.PrettyPrint(),
+                                $"{data.Cpu:F2} mc");
+
                         ctx.Refresh();
                     }
                 });
@@ -114,10 +101,7 @@ public sealed class SpectreConsoleActor : ReceiveActor
         {
             // convert c.Timestamp from ticks to DateTime
             var timestamp = new DateTime(c.TimeStamp);
-            if (!metrics.TryGetValue(c.Node, out var nodeData))
-            {
-                nodeData = new MetricData();
-            }
+            if (!metrics.TryGetValue(c.Node, out var nodeData)) nodeData = new MetricData();
 
             switch (c.Measure)
             {
@@ -127,7 +111,7 @@ public sealed class SpectreConsoleActor : ReceiveActor
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-                        
+
             nodeData = nodeData with { LastUpdated = timestamp };
             metrics[c.Node] = nodeData;
         }
@@ -137,5 +121,14 @@ public sealed class SpectreConsoleActor : ReceiveActor
     {
         // request the metrics feed from the aggregator
         _metricAggregator.Tell(MetricAggregator.RequestMetricsFeed.Instance);
+    }
+
+    private class Run
+    {
+        public static readonly Run Instance = new();
+
+        private Run()
+        {
+        }
     }
 }

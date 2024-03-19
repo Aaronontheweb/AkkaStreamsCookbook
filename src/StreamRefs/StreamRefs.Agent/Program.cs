@@ -1,4 +1,10 @@
-﻿using Akka.Actor;
+﻿// -----------------------------------------------------------------------
+// <copyright file="Program.cs" company="Petabridge, LLC">
+//       Copyright (C) 2015 - 2024 Petabridge, LLC <https://petabridge.com>
+// </copyright>
+// -----------------------------------------------------------------------
+
+using Akka.Actor;
 using Akka.Hosting;
 using Akka.Remote.Hosting;
 using Microsoft.Extensions.Hosting;
@@ -14,13 +20,15 @@ hostBuilder.ConfigureServices((context, services) =>
     services.AddAkka("MetricsAgent", (builder, sp) =>
     {
         builder
-            .WithRemoting(new RemoteOptions() { Port = 0, HostName = "localhost" })
+            .WithRemoting(new RemoteOptions { Port = 0, HostName = "localhost" })
             .WithActors((system, registry) =>
             {
-                var metricAggregator = system.ActorOf(Props.Create(() => new MetricAggregator(serverAddress)), "metric-aggregator");
+                var metricAggregator = system.ActorOf(Props.Create(() => new MetricAggregator(serverAddress)),
+                    "metric-aggregator");
                 registry.Register<MetricAggregator>(metricAggregator);
-            
-                var cpuCollector = system.ActorOf(Props.Create(() => new CpuCollector(metricAggregator)), "cpu-collector");
+
+                var cpuCollector =
+                    system.ActorOf(Props.Create(() => new CpuCollector(metricAggregator)), "cpu-collector");
             });
     });
 });
