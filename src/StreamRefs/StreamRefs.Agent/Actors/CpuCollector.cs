@@ -1,3 +1,9 @@
+// -----------------------------------------------------------------------
+// <copyright file="CpuCollector.cs" company="Petabridge, LLC">
+//       Copyright (C) 2015 - 2024 Petabridge, LLC <https://petabridge.com>
+// </copyright>
+// -----------------------------------------------------------------------
+
 using Akka.Actor;
 using Akka.Event;
 using Universe.CpuUsage;
@@ -5,27 +11,15 @@ using Universe.CpuUsage;
 namespace StreamRefs.Agent.Actors;
 
 /// <summary>
-/// Collects CPU utilization data using https://github.com/devizer/Universe.CpuUsage
+///     Collects CPU utilization data using https://github.com/devizer/Universe.CpuUsage
 /// </summary>
 public sealed class CpuCollector : ReceiveActor, IWithTimers
 {
-    private sealed class GatherMetrics
-    {
-        private GatherMetrics()
-        {
-        }
-
-        public static GatherMetrics Instance { get; } = new();
-    }
-
-    public sealed record CpuUpdate(double CpuUsage, long TimeStamp);
-
-    public ITimerScheduler Timers { get; set; } = null!;
+    private readonly ILoggingAdapter _log = Context.GetLogger();
+    private readonly IActorRef _metricAggregator;
 
     private DateTime _lastMeasurement = DateTime.UtcNow;
-    private readonly IActorRef _metricAggregator;
-    private readonly ILoggingAdapter _log = Context.GetLogger();
-    
+
     public CpuCollector(IActorRef metricAggregator)
     {
         _metricAggregator = metricAggregator;
@@ -36,13 +30,13 @@ public sealed class CpuCollector : ReceiveActor, IWithTimers
             {
                 // convert the total microseconds to millicores
                 var interval = DateTime.UtcNow - _lastMeasurement;
-                if(interval.TotalMilliseconds > 0)
+                if (interval.TotalMilliseconds > 0)
                 {
-                    var millicoreUsage = (cpuUsage.Value.TotalMicroSeconds / interval.TotalSeconds) * 0.001;
+                    var millicoreUsage = cpuUsage.Value.TotalMicroSeconds / interval.TotalSeconds * 0.001;
                     _log.Info("CPU usage: {0} mc", millicoreUsage);
                     _metricAggregator.Tell(new CpuUpdate(millicoreUsage, DateTime.UtcNow.Ticks));
                 }
-                
+
                 _lastMeasurement = DateTime.UtcNow;
             }
             else
@@ -51,9 +45,22 @@ public sealed class CpuCollector : ReceiveActor, IWithTimers
             }
         });
     }
-    
+
+    public ITimerScheduler Timers { get; set; } = null!;
+
     protected override void PreStart()
     {
         Timers.StartPeriodicTimer("cpu-gatherer", GatherMetrics.Instance, TimeSpan.FromSeconds(2.5));
     }
+
+    private sealed class GatherMetrics
+    {
+        private GatherMetrics()
+        {
+        }
+
+        public static GatherMetrics Instance { get; } = new();
+    }
+
+    public sealed record CpuUpdate(double CpuUsage, long TimeStamp);
 }

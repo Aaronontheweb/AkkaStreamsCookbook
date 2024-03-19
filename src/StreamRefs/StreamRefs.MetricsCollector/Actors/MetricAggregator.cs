@@ -1,6 +1,6 @@
 ﻿// -----------------------------------------------------------------------
-//  <copyright file="MetricAggregator.cs" company="Akka.NET Project">
-//      Copyright (C) 2013-2024 .NET Foundation <https://github.com/akkadotnet/akka.net>
+// <copyright file="MetricAggregator.cs" company="Petabridge, LLC">
+//       Copyright (C) 2015 - 2024 Petabridge, LLC <https://petabridge.com>
 // </copyright>
 // -----------------------------------------------------------------------
 
@@ -22,7 +22,8 @@ public static class MetricAggregatorExtensions
     {
         builder.WithActors((system, registry, resolver) =>
         {
-            var metricAggregator = system.ActorOf(Props.Create(() => new MetricAggregator("metrics-collector")), "metric-aggregator");
+            var metricAggregator = system.ActorOf(Props.Create(() => new MetricAggregator("metrics-collector")),
+                "metric-aggregator");
             registry.Register<MetricAggregator>(metricAggregator);
         });
         return builder;
@@ -31,30 +32,14 @@ public static class MetricAggregatorExtensions
 
 public sealed class MetricAggregator : ReceiveActor
 {
-    public sealed class RequestMetricsFeed
-    {
-        private RequestMetricsFeed()
-        {
-        }
-
-        public static RequestMetricsFeed Instance { get; } = new();
-    }
-
-    /// <summary>
-    /// Provides a feed of metrics to the requesting actor.
-    /// </summary>
-    /// <remarks>
-    /// Typically, only requested once by the process.
-    /// </remarks>
-    public sealed record MetricsFeed(ChannelReader<MetricEvent> Reader);
+    private readonly CancellationTokenSource _cancellation = new();
 
     private readonly ILoggingAdapter _log = Context.GetLogger();
     private readonly IMaterializer _materializer = ActorMaterializer.Create(Context);
-    private readonly CancellationTokenSource _cancellation = new();
-    private ChannelReader<MetricEvent> _metricsReader;
-    private Sink<MetricEvent, NotUsed> _finalSink;
 
     private readonly SubscriberId _subscriberId;
+    private Sink<MetricEvent, NotUsed> _finalSink;
+    private ChannelReader<MetricEvent> _metricsReader;
 
     public MetricAggregator(string subscriberId)
     {
@@ -66,20 +51,20 @@ public sealed class MetricAggregator : ReceiveActor
             Debug.Assert(_metricsReader != null, nameof(_metricsReader) + " != null");
             Sender.Tell(new MetricsFeed(_metricsReader));
         });
-        
+
         Receive<MetricCommands.PingServer>(p =>
         {
             _log.Info("Received ping from {0}", p.MyAddress);
             Sender.Tell(new MetricCommands.SubscribeToMetrics(_subscriberId, p.MyAddress));
         });
-        
+
         Receive<MetricCommands.PushMetrics>(p =>
         {
             _log.Info("Received metrics from {0}", p.NodeAddress);
-            
+
             // run the streamed metrics into the final sink
             p.MetricsSource.Source.RunWith(_finalSink, _materializer);
-            
+
             Sender.Tell(new MetricCommands.ReceivingMetrics(_subscriberId, p.NodeAddress));
         });
     }
@@ -94,9 +79,26 @@ public sealed class MetricAggregator : ReceiveActor
         _metricsReader = reader;
 
         // create a MergeHub that will be used to aggregate all of the various metrics
-        _finalSink = MergeHub.Source<MetricEvent>(perProducerBufferSize: 10)
+        _finalSink = MergeHub.Source<MetricEvent>(10)
             .Via(_cancellation.Token.AsFlow<MetricEvent>())
             .To(sink)
             .Run(_materializer);
     }
+
+    public sealed class RequestMetricsFeed
+    {
+        private RequestMetricsFeed()
+        {
+        }
+
+        public static RequestMetricsFeed Instance { get; } = new();
+    }
+
+    /// <summary>
+    ///     Provides a feed of metrics to the requesting actor.
+    /// </summary>
+    /// <remarks>
+    ///     Typically, only requested once by the process.
+    /// </remarks>
+    public sealed record MetricsFeed(ChannelReader<MetricEvent> Reader);
 }

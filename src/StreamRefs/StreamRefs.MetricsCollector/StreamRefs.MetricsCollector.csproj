@@ -8,12 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Akka.Hosting" />
-        <PackageReference Include="Akka.Remote.Hosting" />
-        <PackageReference Include="Spectre.Console.Cli" />
+        <PackageReference Include="Akka.Hosting"/>
+        <PackageReference Include="Akka.Remote.Hosting"/>
+        <PackageReference Include="Spectre.Console.Cli"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\StreamRefs.Shared\StreamRefs.Shared.csproj" />
+        <ProjectReference Include="..\StreamRefs.Shared\StreamRefs.Shared.csproj"/>
     </ItemGroup>
 </Project>
