@@ -90,10 +90,18 @@ public sealed class SpectreConsoleActor : ReceiveActor
                         ProcessEvent(c, metrics);
                         table.Rows.Clear();
                         
+                        // if we've had any nodes without an update in the last 60 seconds, remove them
+                        var now = DateTime.UtcNow;
+                        var toRemove = metrics.Where(x => (now - x.Value.LastUpdated).TotalSeconds > 60).ToList();
+                        foreach (var (node, _) in toRemove)
+                        {
+                            metrics.Remove(node);
+                        }
+                        
                         foreach (var (node, data) in metrics)
                         {
                             // format data.Cpu into a string with only up to 2 numbers after decimal point
-                            table.AddRow($"{node.Host}:{node.Port}", $"{data.Cpu:F2} mc", data.LastUpdated.PrettyPrint());
+                            table.AddRow($"{node.Host}:{node.Port}",data.LastUpdated.PrettyPrint(),  $"{data.Cpu:F2} mc");
                         }
                         
                         ctx.Refresh();
