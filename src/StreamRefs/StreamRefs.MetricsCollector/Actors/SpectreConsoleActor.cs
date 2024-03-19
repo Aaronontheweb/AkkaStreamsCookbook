@@ -6,10 +6,32 @@
 
 using System.Threading.Channels;
 using Akka.Actor;
+using Akka.Hosting;
 using Spectre.Console;
 using StreamRefs.Shared;
 
 namespace StreamRefs.MetricsCollector.Actors;
+
+public record struct MetricData
+{
+    public double Cpu { get; init; }
+    
+    public DateTime LastUpdated { get; init; }
+}
+
+public static class SpectreConsoleActorExtensions
+{
+    public static AkkaConfigurationBuilder WithSpectreConsoleActor(this AkkaConfigurationBuilder builder)
+    {
+        builder.WithActors(async (system, registry, resolver) =>
+        {
+            var metricAggregator = await registry.GetAsync<MetricAggregator>();
+            var consoleActor = system.ActorOf(Props.Create(() => new SpectreConsoleActor(metricAggregator)),
+                "spectre-console");
+        });
+        return builder;
+    }
+}
 
 /// <summary>
 /// This actor is responsible for rendering the metrics to the console.
@@ -48,8 +70,8 @@ public sealed class SpectreConsoleActor : ReceiveActor
     {
         Receive<Run>(feed =>
         {
-            var table = new Table().Expand().BorderColor(Color.Grey);
-            table.AddColumn("Address").AddColumn("Time").AddColumn("CPU");
+            var table = new Table().Centered().BorderColor(Color.Grey);
+            table.AddColumn("Address").AddColumn("Last Update").AddColumn("CPU");
             
             AnsiConsole.MarkupLine("Press [yellow]CTRL+C[/] to exit");
             AnsiConsole.Live(table)
@@ -58,13 +80,49 @@ public sealed class SpectreConsoleActor : ReceiveActor
                 .Cropping(VerticalOverflowCropping.Bottom)
                 .StartAsync(async ctx =>
                 {
+                    Dictionary<NodeAddress, MetricData> metrics = new();
+
+                    table.AddEmptyRow();
+                    ctx.Refresh();
+                    
                     await foreach(var c in _channelReader!.ReadAllAsync())
                     {
-                        table.AddRow(c.NodeAddress.ToString(), c.TimeStamp.ToString(), c.Value.ToString());
+                        ProcessEvent(c, metrics);
+                        table.Rows.Clear();
+                        
+                        foreach (var (node, data) in metrics)
+                        {
+                            // format data.Cpu into a string with only up to 2 numbers after decimal point
+                            table.AddRow(node.ToString(), $"{data.Cpu:F2} mc", data.LastUpdated.PrettyPrint());
+                        }
+                        
                         ctx.Refresh();
                     }
                 });
         });
+        return;
+
+        void ProcessEvent(in MetricEvent c, Dictionary<NodeAddress, MetricData> metrics)
+        {
+            // convert c.Timestamp from ticks to DateTime
+            var timestamp = new DateTime(c.TimeStamp);
+            if (!metrics.TryGetValue(c.Node, out var nodeData))
+            {
+                nodeData = new MetricData();
+            }
+
+            switch (c.Measure)
+            {
+                case MetricMeasure.Cpu:
+                    nodeData = nodeData with { Cpu = c.Value };
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+                        
+            nodeData = nodeData with { LastUpdated = timestamp };
+            metrics[c.Node] = nodeData;
+        }
     }
 
     protected override void PreStart()

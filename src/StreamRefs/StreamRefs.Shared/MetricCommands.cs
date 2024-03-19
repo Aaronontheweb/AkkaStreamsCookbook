@@ -9,14 +9,14 @@ using Akka.Streams;
 namespace StreamRefs.Shared;
 
 
-public readonly struct NodeAddress(string Host, int Port);
+public record struct NodeAddress(string Host, int Port);
 
 public enum MetricMeasure
 {
     Cpu
 }
 
-public readonly struct MetricEvent(long TimeStamp, MetricMeasure Measure, double Value);
+public record struct MetricEvent(NodeAddress Node, long TimeStamp, MetricMeasure Measure, double Value);
 
 public readonly struct SubscriberId(string Id);
 
