@@ -1,6 +1,5 @@
-﻿using Akka.Actor;
-using Akka.Hosting;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Akka.Hosting;
+using Akka.Remote.Hosting;
 using Microsoft.Extensions.Hosting;
 using StreamRefs.MetricsCollector.Actors;
 
@@ -14,6 +13,7 @@ hostBuilder.ConfigureServices((context, services) =>
         {
             loggers.ClearLoggers();
         })
+        .WithRemoting(new RemoteOptions(){ Port = 9912, HostName = "localhost" })
         .WithMetricAggregator()
         .WithSpectreConsoleActor();
     });

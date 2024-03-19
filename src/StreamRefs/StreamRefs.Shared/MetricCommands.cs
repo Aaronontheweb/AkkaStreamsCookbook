@@ -37,4 +37,6 @@ public static class MetricCommands
     public sealed record SubscribeToMetrics(SubscriberId SubscriberId, NodeAddress NodeAddress) : ISubscriptionCommand;
     
     public sealed record PushMetrics(SubscriberId SubscriberId, NodeAddress NodeAddress, ISourceRef<MetricEvent> MetricsSource) : ISubscriptionCommand;
+    
+    public sealed record ReceivingMetrics(SubscriberId SubscriberId, NodeAddress NodeAddress) : ISubscriptionCommand;
 }

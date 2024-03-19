@@ -10,10 +10,11 @@
     <ItemGroup>
         <PackageReference Include="Akka.Hosting" />
         <PackageReference Include="Akka.Remote.Hosting" />
-        <PackageReference Include="Spectre.Console.Cli" />
+        <PackageReference Include="Universe.CpuUsage" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\StreamRefs.Shared\StreamRefs.Shared.csproj" />
     </ItemGroup>
+
 </Project>

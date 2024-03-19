@@ -93,7 +93,7 @@ public sealed class SpectreConsoleActor : ReceiveActor
                         foreach (var (node, data) in metrics)
                         {
                             // format data.Cpu into a string with only up to 2 numbers after decimal point
-                            table.AddRow(node.ToString(), $"{data.Cpu:F2} mc", data.LastUpdated.PrettyPrint());
+                            table.AddRow($"{node.Host}:{node.Port}", $"{data.Cpu:F2} mc", data.LastUpdated.PrettyPrint());
                         }
                         
                         ctx.Refresh();

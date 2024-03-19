@@ -77,6 +77,8 @@ public sealed class MetricAggregator : ReceiveActor
             
             // run the streamed metrics into the final sink
             p.MetricsSource.Source.RunWith(_finalSink, _materializer);
+            
+            Sender.Tell(new MetricCommands.ReceivingMetrics(_subscriberId, p.NodeAddress));
         });
     }
 

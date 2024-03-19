@@ -19,6 +19,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "StreamRefs", "StreamRefs", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamRefs.Shared", "src\StreamRefs\StreamRefs.Shared\StreamRefs.Shared.csproj", "{9FF11D1B-F4F7-439C-ADFA-0B5C47C707B1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamRefs.Agent", "src\StreamRefs\StreamRefs.Agent\StreamRefs.Agent.csproj", "{623CDD47-295C-40C1-AEA0-3D63C016CC29}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,9 +42,14 @@ Global
 		{9FF11D1B-F4F7-439C-ADFA-0B5C47C707B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9FF11D1B-F4F7-439C-ADFA-0B5C47C707B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9FF11D1B-F4F7-439C-ADFA-0B5C47C707B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{623CDD47-295C-40C1-AEA0-3D63C016CC29}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{623CDD47-295C-40C1-AEA0-3D63C016CC29}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{623CDD47-295C-40C1-AEA0-3D63C016CC29}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{623CDD47-295C-40C1-AEA0-3D63C016CC29}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{51894F6F-C095-4A09-A2E7-A98BB5766971} = {39B771C9-D3A1-4483-AFC7-193E356665B5}
 		{9FF11D1B-F4F7-439C-ADFA-0B5C47C707B1} = {39B771C9-D3A1-4483-AFC7-193E356665B5}
+		{623CDD47-295C-40C1-AEA0-3D63C016CC29} = {39B771C9-D3A1-4483-AFC7-193E356665B5}
 	EndGlobalSection
 EndGlobal
