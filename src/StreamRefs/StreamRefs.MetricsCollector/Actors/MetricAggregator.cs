@@ -35,7 +35,7 @@ public sealed class MetricAggregator : ReceiveActor
     private readonly CancellationTokenSource _cancellation = new();
 
     private readonly ILoggingAdapter _log = Context.GetLogger();
-    private readonly IMaterializer _materializer = ActorMaterializer.Create(Context);
+    private readonly IMaterializer _materializer = Context.Materializer();
 
     private readonly SubscriberId _subscriberId;
     private Sink<MetricEvent, NotUsed> _finalSink;
@@ -73,7 +73,7 @@ public sealed class MetricAggregator : ReceiveActor
     {
         // create an Akka.Streams MergeHub that will be used to aggregate all of the various metrics
         var (reader, sink) = ChannelSink.AsReader<MetricEvent>(100, true, BoundedChannelFullMode.DropOldest)
-            .PreMaterialize(Context.Materializer());
+            .PreMaterialize(_materializer);
 
         // metrics reader will be used to provide a feed of metrics to the requesting actor
         _metricsReader = reader;
