@@ -28,7 +28,6 @@ public static class ProductInventoryStateExtensions
     }
 }
 
-
 public sealed class ProductInventoryActor : ReceivePersistentActor
 {
     // State: Track the product's inventory state
