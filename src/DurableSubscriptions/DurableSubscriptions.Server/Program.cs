@@ -18,12 +18,18 @@ hostBuilder.ConfigureServices((context, services) =>
             .WithClustering(new ClusterOptions()
                 { SeedNodes = ["akka.tcp://DurableSubs@localhost:9914"], Roles = ["subscriptions"] })
             .WithShardRegion<ProductInventoryActor>("products",
-                s => Props.Create(() => new ProductInventoryActor(new ProductId(s))), 
+                s => Props.Create(() => new ProductInventoryActor(new ProductId(s))),
                 HashCodeMessageExtractor.Create(50, EntityIdExtractor), new ShardOptions()
                 {
                     StateStoreMode = StateStoreMode.DData,
                     Role = "subscriptions"
-                });
+                })
+            .WithActors((system, registry, resolver) =>
+            {
+                // populate some data
+                var props = resolver.Props<ProductEventGenerator>();
+                var generator = system.ActorOf(props, "event-generator");
+            });
         return;
 
         string? EntityIdExtractor(object arg)
