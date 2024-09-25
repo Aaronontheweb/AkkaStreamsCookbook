@@ -11,9 +11,11 @@
   <ItemGroup>
     <PackageVersion Include="Akka.Cluster.Hosting" Version="1.5.28" />
     <PackageVersion Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
+    <PackageVersion Include="Akka.Persistence.Sql.Hosting" Version="1.5.28" />
     <PackageVersion Include="Akka.Remote.Hosting" Version="$(AkkaHostingVersion)" />
     <PackageVersion Include="Akka.Streams" Version="$(AkkaVersion)" />
     <PackageVersion Include="Bogus" Version="35.6.1" />
+    <PackageVersion Include="Npgsql" Version="8.0.4" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.49.1" />
     <PackageVersion Include="Universe.CpuUsage" Version="2.2.497.598" />
     <PackageVersion Include="xunit" Version="2.9.1" />

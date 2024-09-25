@@ -24,6 +24,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DurableSubscriptions.Shared", "src\DurableSubscriptions\DurableSubscriptions.Shared\DurableSubscriptions.Shared.csproj", "{46B99A98-0D2C-4E3C-9A32-D949A4EDF00E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DurableSubscriptions", "DurableSubscriptions", "{40B8DF91-BE67-40C6-A268-FB3C2CDCAB3D}"
+	ProjectSection(SolutionItems) = preProject
+		src\DurableSubscriptions\launch-postgres.sh = src\DurableSubscriptions\launch-postgres.sh
+		src\DurableSubscriptions\README.md = src\DurableSubscriptions\README.md
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DurableSubscriptions.Server", "src\DurableSubscriptions\DurableSubscriptions.Server\DurableSubscriptions.Server.csproj", "{47B1ED95-0854-491C-A82E-819E2740B3B2}"
 EndProject
