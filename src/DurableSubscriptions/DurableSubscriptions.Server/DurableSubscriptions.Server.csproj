@@ -11,4 +11,9 @@
       <ProjectReference Include="..\DurableSubscriptions.Shared\DurableSubscriptions.Shared.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Akka.Cluster.Hosting" />
+      <PackageReference Include="Bogus" />
+    </ItemGroup>
+
 </Project>

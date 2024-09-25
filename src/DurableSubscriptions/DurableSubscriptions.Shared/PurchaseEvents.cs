@@ -11,6 +11,6 @@ public interface IProductEvent : IWithProductId{}
 
 public static class ProductEvents
 {
-    public record struct ProductPurchased(ProductId ProductId, int Quantity, double PricePerUnit) : IProductEvent;
-    public record struct ProductStocked(ProductId ProductId, int Quantity): IProductEvent;
+    public sealed record ProductPurchased(ProductId ProductId, int Quantity, double PricePerUnit) : IProductEvent;
+    public sealed record ProductStocked(ProductId ProductId, int Quantity): IProductEvent;
 }
