@@ -6,6 +6,7 @@ using Akka.Persistence.Sql.Config;
 using Akka.Persistence.Sql.Hosting;
 using Akka.Remote.Hosting;
 using DurableSubscriptions.Server.Actors;
+using DurableSubscriptions.Server.Persistence;
 using DurableSubscriptions.Shared;
 using LinqToDB;
 using Microsoft.Extensions.Configuration;
@@ -24,15 +25,12 @@ hostBuilder.ConfigureAppConfiguration((context, builder) =>
         .AddEnvironmentVariables();
 });
 
-hostBuilder.ConfigureLogging(builder =>
-{
-    builder.AddConsole();
-});
+hostBuilder.ConfigureLogging(builder => { builder.AddConsole(); });
 
 hostBuilder.ConfigureServices((context, services) =>
 {
     var connectionString = context.Configuration.GetConnectionString("DefaultConnection");
-    
+
     services.AddAkka("DurableSubs", (builder, sp) =>
     {
         builder.ConfigureLoggers(c =>
@@ -44,7 +42,10 @@ hostBuilder.ConfigureServices((context, services) =>
             .WithRemoting(new RemoteOptions { Port = 9914, HostName = "localhost" })
             .WithClustering(new ClusterOptions()
                 { SeedNodes = ["akka.tcp://DurableSubs@localhost:9914"], Roles = ["subscriptions"] })
-            .WithSqlPersistence(connectionString, ProviderName.PostgreSQL, tagStorageMode:TagMode.TagTable)
+            .WithSqlPersistence(connectionString, ProviderName.PostgreSQL, tagStorageMode: TagMode.TagTable,
+                journalBuilder: (j) =>
+                    j.AddWriteEventAdapter<ProductEventsTagger>("product-events-tagger",
+                        new[] { typeof(IProductEvent) }))
             .WithShardRegion<ProductInventoryActor>("products",
                 s => Props.Create(() => new ProductInventoryActor(new ProductId(s))),
                 HashCodeMessageExtractor.Create(50, EntityIdExtractor), new ShardOptions()
@@ -62,7 +63,7 @@ hostBuilder.ConfigureServices((context, services) =>
 
         string? EntityIdExtractor(object arg)
         {
-            if(arg is IWithProductId withProductId)
+            if (arg is IWithProductId withProductId)
             {
                 return withProductId.ProductId.Id;
             }
