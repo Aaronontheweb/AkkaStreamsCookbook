@@ -4,8 +4,8 @@
   </PropertyGroup>
   <!-- Akka.NET Package Versions -->
   <ItemGroup>
-    <PackageVersion Include="Akka.Hosting" Version="1.5.18" />
-    <PackageVersion Include="Akka.Remote.Hosting" Version="1.5.18" />
+    <PackageVersion Include="Akka.Hosting" Version="1.5.28" />
+    <PackageVersion Include="Akka.Remote.Hosting" Version="1.5.28" />
     <PackageVersion Include="Akka.Streams" Version="1.5.28" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.48.0" />
     <PackageVersion Include="Universe.CpuUsage" Version="2.2.497.598" />
