@@ -13,6 +13,7 @@ using Akka.Persistence.Query;
 using Akka.Persistence.Sql.Query;
 using Akka.Streams;
 using Akka.Streams.Dsl;
+using Akka.Util.Internal;
 using DurableSubscriptions.Shared;
 
 namespace DurableSubscriptions.Server.Actors;
@@ -26,6 +27,7 @@ public sealed class SubscriberActor : UntypedPersistentActor
     private CancellationTokenSource? _subscriptionCancellation;
     private IActorRef? _remoteSubscriber;
     
+    private AtomicCounter _pageId = new AtomicCounter(0);
     public SubscriberState State { get; private set; } 
     
     public SubscriberActor(SubscriberId subscriberId)
@@ -41,6 +43,11 @@ public sealed class SubscriberActor : UntypedPersistentActor
             case SubscriptionMessages.RunSubscription run:
             {
                 HandleRun(run);
+                break;
+            }
+            case Completed:
+            {
+                // ignore
                 break;
             }
         }
@@ -63,27 +70,42 @@ public sealed class SubscriberActor : UntypedPersistentActor
         var sources = State.OffsetsPerTag.Select(c => readJournal.EventsByTag(c.Key, c.Value)).ToList();
         
         // merge the sources together
-        CombineSources(sources);
+        var combined = StreamsHelper.CombineSources(sources);
+        combined
+            .Via(_subscriptionCancellation.Token.AsFlow<EventEnvelope>())
+            .GroupedWithin(State.PageSize.Value, TimeSpan.FromSeconds(10))
+            .Select(c => CreateDataPage(c.ToList(), _pageId))
+            .RunWith(Sink.ActorRefWithAck<DataPageStructure>(self, Start.Instance, PageAck.Instance, Completed.Instance,
+                ex => new Status.Failure(ex)), _mat);
+        
+        Become(RunningSubscription);
     }
-
-    public static Source<T, NotUsed> CombineSources<T>(List<Source<T, NotUsed>> sources)
-    {
-        var combinedSource = sources.Count switch
-        {
-            0 => Source.Empty<T>(),
-            1 => sources[0],
-            _ => Source.Combine(sources[0], sources[1], i => new Merge<T, T>(i), sources.Skip(2).ToArray())
-        };
-
-        return combinedSource;
-    }
-
+    
     /// <summary>
     /// Occurs after the client subscribes to the stream.
     /// </summary>
     private void RunningSubscription(object message)
     {
-        
+        switch (message)
+        {
+            case DataPageStructure page:
+            {
+                _remoteSubscriber.Tell(page);
+                break;
+            }
+        }
+    }
+
+    private Receive PendingPageAck(DataPageStructure currentPage)
+    {
+        return s =>
+        {
+            switch (s)
+            {
+                default:
+                    return false;
+            }
+        };
     }
 
     protected override void OnRecover(object message)
@@ -98,9 +120,59 @@ public sealed class SubscriberActor : UntypedPersistentActor
                 break;
         }
     }
+
+    private sealed class Start
+    {
+        public static readonly Start Instance = new();
+        private Start()
+        {
+        }
+    }
+    
+    private sealed class PageAck
+    {
+        public static readonly PageAck Instance = new();
+        private PageAck()
+        {
+        }
+    }
+    
+    private sealed class Completed : IDeadLetterSuppression
+    {
+        public static readonly Completed Instance = new();
+        private Completed()
+        {
+        }
+    }
+    
+    private static DataPageStructure CreateDataPage(IReadOnlyList<EventEnvelope> events, AtomicCounter pageIdCounter)
+    {
+        // grab the largest offset per tag - bearing in mind there can be multiple tags per event
+        var tagData = new Dictionary<string, Offset>();
+        foreach(var e in events)
+        {
+            foreach (var t in e.Tags)
+            {
+                if(tagData.TryGetValue(t, out var current))
+                {
+                    if(e.Offset.CompareTo(current) > 0)
+                        tagData[e.PersistenceId] = e.Offset;
+                }
+                else
+                {
+                    tagData[e.PersistenceId] = e.Offset;
+                }
+            }
+        }
+        
+        // ok, now filter all the events, so we include only the IProductEvent
+        var productEvents = events.Select(e => e.Event).OfType<IProductEvent>().ToList();
+        
+        return new DataPageStructure(tagData, productEvents, new NonZeroInt(pageIdCounter.GetAndIncrement()));
+    }
 }
 
-public sealed record DataPageStructure(Dictionary<string, Offset> OffsetsPerTag, NonZeroInt PageId);
+public sealed record DataPageStructure(Dictionary<string, Offset> OffsetsPerTag, List<IProductEvent> Events, NonZeroInt PageId);
 
 /// <summary>
 /// This gets persisted to the journal and represents the current state of the subscriber.

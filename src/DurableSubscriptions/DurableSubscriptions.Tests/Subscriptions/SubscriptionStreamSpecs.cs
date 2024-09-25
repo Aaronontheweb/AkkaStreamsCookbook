@@ -28,7 +28,7 @@ public class SubscriptionStreamSpecs : TestKit
     {
         // arrange
         var sources = Enumerable.Range(0, sourceCount).Select(i => Source.Single(i)).ToList();
-        var combined = SubscriberActor.CombineSources(sources);
+        var combined = StreamsHelper.CombineSources(sources);
         
         // act
         var result = await combined.RunWith(Sink.Seq<int>(), Sys);
