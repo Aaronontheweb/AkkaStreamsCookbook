@@ -31,6 +31,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DurableSubscriptions", "Dur
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DurableSubscriptions.Server", "src\DurableSubscriptions\DurableSubscriptions.Server\DurableSubscriptions.Server.csproj", "{47B1ED95-0854-491C-A82E-819E2740B3B2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DurableSubscriptions.Tests", "src\DurableSubscriptions\DurableSubscriptions.Tests\DurableSubscriptions.Tests.csproj", "{051CB6AC-172C-4ACF-9B18-C783D8D87DAA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -64,6 +66,10 @@ Global
 		{47B1ED95-0854-491C-A82E-819E2740B3B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47B1ED95-0854-491C-A82E-819E2740B3B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{47B1ED95-0854-491C-A82E-819E2740B3B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{051CB6AC-172C-4ACF-9B18-C783D8D87DAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{051CB6AC-172C-4ACF-9B18-C783D8D87DAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{051CB6AC-172C-4ACF-9B18-C783D8D87DAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{051CB6AC-172C-4ACF-9B18-C783D8D87DAA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{51894F6F-C095-4A09-A2E7-A98BB5766971} = {39B771C9-D3A1-4483-AFC7-193E356665B5}
@@ -72,5 +78,6 @@ Global
 		{0875EDF2-5525-4F31-913D-0EC25C0E853C} = {39B771C9-D3A1-4483-AFC7-193E356665B5}
 		{46B99A98-0D2C-4E3C-9A32-D949A4EDF00E} = {40B8DF91-BE67-40C6-A268-FB3C2CDCAB3D}
 		{47B1ED95-0854-491C-A82E-819E2740B3B2} = {40B8DF91-BE67-40C6-A268-FB3C2CDCAB3D}
+		{051CB6AC-172C-4ACF-9B18-C783D8D87DAA} = {40B8DF91-BE67-40C6-A268-FB3C2CDCAB3D}
 	EndGlobalSection
 EndGlobal
