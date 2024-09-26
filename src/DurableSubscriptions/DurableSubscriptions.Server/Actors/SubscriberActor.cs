@@ -171,13 +171,18 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
         {
             switch (s)
             {
-                case SubscriptionMessages.AckPage ackPage:
+                case SubscriptionMessages.AckPage ackPage when ackPage.PageId == currentPage.PageId:
                 {
                     _log.Debug("Received ack for page {0}", ackPage.PageId);
                     UnschedulePageTimer(currentPage.PageId);
                     State = State.Apply(currentPage);
                     Become(RunningSubscription);
                     localStreamSender.Tell(AckInternalPageStream.Instance);
+                    return true;
+                }
+                case SubscriptionMessages.AckPage ackPage:
+                {
+                    _log.Warning("Received ack for page {0} but we were expecting ack for page {1}. Ignoring.", ackPage.PageId, currentPage.PageId);
                     return true;
                 }
                 case AckTimeout timeout:
