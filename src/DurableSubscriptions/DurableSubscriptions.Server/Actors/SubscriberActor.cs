@@ -157,7 +157,12 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
         _subscriptionCancellation?.Cancel();
         _subscriptionCancellation = null;
         if (_remoteSubscriber != null)
+        {
+            // let the subscriber know we're done
+            _remoteSubscriber.Tell(new SubscriptionMessages.SubscriptionTerminated(State.SubscriberId));
             Context.Unwatch(_remoteSubscriber);
+        }
+           
     }
 
     private Receive PendingPageAck(DataPageStructure currentPage, IActorRef localStreamSender)
@@ -194,7 +199,7 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
                     _log.Error(failure.Cause, "Failed to run subscription.");
                     ResetSubscription();
                     Become(OnCommand);
-                    break;
+                    return true;
                 }
                 case Completed:
                 {
