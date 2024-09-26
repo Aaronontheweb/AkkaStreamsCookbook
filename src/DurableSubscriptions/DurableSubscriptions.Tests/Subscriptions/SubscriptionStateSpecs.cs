@@ -50,11 +50,11 @@ public class SubscriptionStateSpecs
         var tag2Events = Enumerable.Range(1, 5).Select(
             c => new EventEnvelope(Offset.Sequence(c), "test2", c,
                 e, DateTime.UtcNow.Ticks, ["test2"])).ToList();
-        var tag1and3Events = Enumerable.Range(7, 11).Select(
+        var tag1And3Events = Enumerable.Range(7, 11).Select(
             c => new EventEnvelope(Offset.Sequence(c), "test1", c,
                 e, DateTime.UtcNow.Ticks, ["test1", "test3"])).ToList();
         
-        var combinedEvents = tag1Events.Concat(tag2Events).Concat(tag1and3Events).ToList();
+        var combinedEvents = tag1Events.Concat(tag2Events).Concat(tag1And3Events).ToList();
         
         var initial = new SubscriberState(TestSubscriber).Apply(SubRequest1 with { Tags = ["test1", "test2", "test3", "test4"
         ]});
