@@ -10,15 +10,15 @@ namespace DurableSubscriptions.Tests.Subscriptions;
 
 public class SubscriptionStateSpecs
 {
-    public static readonly SubscriberId TestSubscriber = new SubscriberId("TestId");
+    public static readonly SubscriberId TestSubscriber = new("TestId");
     public static readonly NonZeroInt RequestedPageSize = new(10);
 
     public static readonly SubscriptionMessages.RunSubscription SubRequest1 = new(TestSubscriber, RequestedPageSize,
-        new[] { "test1", "test3", "test4" }, ActorRefs.Nobody);
+        ["test1", "test3", "test4"], ActorRefs.Nobody);
 
     // Added test2, lost test 3, keep test1 and 4 - and a bigger page size
     public static readonly SubscriptionMessages.RunSubscription SubRequest2 = new(TestSubscriber, new NonZeroInt(15),
-        new[] { "test1", "test2", "test3" }, ActorRefs.Nobody);
+        ["test1", "test2", "test3"], ActorRefs.Nobody);
 
     [Fact]
     public void ShouldRemoveUnusedTags()
@@ -52,7 +52,7 @@ public class SubscriptionStateSpecs
                 e, DateTime.UtcNow.Ticks, ["test2"])).ToList();
         var tag1And3Events = Enumerable.Range(7, 11).Select(
             c => new EventEnvelope(Offset.Sequence(c), "test1", c,
-                e, DateTime.UtcNow.Ticks, ["test1", "test3"])).ToList();
+                e, DateTime.UtcNow.Ticks, ["test1", "test3"])).ToList() ?? throw new ArgumentNullException("Enumerable.Range(7, 11).Select(\n            c => new EventEnvelope(Offset.Sequence(c), \"test1\", c,\n                e, DateTime.UtcNow.Ticks, [\"test1\", \"test3\"])).ToList()");
         
         var combinedEvents = tag1Events.Concat(tag2Events).Concat(tag1And3Events).ToList();
         

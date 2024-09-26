@@ -13,12 +13,13 @@ using Akka.Persistence.Query;
 using Akka.Persistence.Sql.Query;
 using Akka.Streams;
 using Akka.Streams.Dsl;
+using Akka.Streams.Implementation;
 using Akka.Util.Internal;
 using DurableSubscriptions.Shared;
 
 namespace DurableSubscriptions.Server.Actors;
 
-public sealed class SubscriberActor : UntypedPersistentActor
+public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
 {
     public override string PersistenceId { get; }
     private readonly IMaterializer _mat = Context.Materializer();
@@ -91,6 +92,7 @@ public sealed class SubscriberActor : UntypedPersistentActor
             case DataPageStructure page:
             {
                 Become(PendingPageAck(page));
+                
                 _remoteSubscriber.Tell(page);
                 break;
             }
@@ -145,6 +147,8 @@ public sealed class SubscriberActor : UntypedPersistentActor
         {
         }
     }
+
+    private sealed record AckTimeout(int RetryCount, int MaxRetries);
     
     public static DataPageStructure CreateDataPage(IReadOnlyList<EventEnvelope> events, AtomicCounter pageIdCounter)
     {
@@ -171,60 +175,6 @@ public sealed class SubscriberActor : UntypedPersistentActor
         
         return new DataPageStructure(tagData, productEvents, new NonZeroInt(pageIdCounter.IncrementAndGet()));
     }
-}
 
-public sealed record DataPageStructure(Dictionary<string, Offset> OffsetsPerTag, List<IProductEvent> Events, NonZeroInt PageId);
-
-/// <summary>
-/// This gets persisted to the journal and represents the current state of the subscriber.
-/// </summary>
-/// <param name="SubscriberId">The subscriber id</param>
-public sealed record SubscriberState(SubscriberId SubscriberId)
-{
-    public NonZeroInt PageSize { get; init; } = new NonZeroInt(10);
-    
-    public Dictionary<string, Offset> OffsetsPerTag { get; init; } = new Dictionary<string, Offset>();
-}
-
-public static class SubscriberStateExtensions
-{
-    public static SubscriberState Apply(this SubscriberState state, SubscriptionMessages.RunSubscription run)
-    {
-        var tags = run.Tags;
-        var pageSize = run.RequestedPageSize;
-        var subscriberId = run.SubscriberId;
-        
-        // update the subscription state with the new page size
-        // and add any new tags to the list of tags we're tracking
-        var removedTags = state.OffsetsPerTag.Keys.Except(tags).ToImmutableList();
-        var addedTags = tags.Except(state.OffsetsPerTag.Keys).ToImmutableList();
-        
-        // remove old tags, add new ones
-        var newOffsets = state.OffsetsPerTag
-            .Where(x => !removedTags.Contains(x.Key))
-            .Concat(addedTags.Select(x => new KeyValuePair<string, Offset>(x, Offset.NoOffset())))
-            .ToDictionary();
-        
-        state = state with {PageSize = pageSize, OffsetsPerTag = newOffsets};
-
-        return state;
-    }
-    
-    public static SubscriberState Apply(this SubscriberState state, DataPageStructure page)
-    {
-        // need to merge the offsets from the data page into the current state
-        // there's a good chance not every page will have every tag
-        var newOffsets = state.OffsetsPerTag
-            .Select(x =>
-            {
-                if (page.OffsetsPerTag.TryGetValue(x.Key, out var newOffset))
-                {
-                    return new KeyValuePair<string, Offset>(x.Key, newOffset);
-                }
-
-                return x;
-            })
-            .ToDictionary();
-        return state with {OffsetsPerTag = newOffsets};
-    }
+    public ITimerScheduler Timers { get; set; } = null!;
 }
