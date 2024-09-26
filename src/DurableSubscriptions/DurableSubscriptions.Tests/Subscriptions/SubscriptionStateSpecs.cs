@@ -4,6 +4,7 @@ using Akka.Util.Internal;
 using DurableSubscriptions.Server.Actors;
 using DurableSubscriptions.Shared;
 using FluentAssertions;
+using LanguageExt;
 
 namespace DurableSubscriptions.Tests.Subscriptions;
 
@@ -38,7 +39,7 @@ public class SubscriptionStateSpecs
 
     // create a test that ensures that data pages only include the highest offsets for each tag
     [Fact]
-    public void ShouldRespectPageSize()
+    public void ShouldComputeDataPageCorrectly()
     {
         // arrange
         var productId = new ProductId("foo");
@@ -55,20 +56,31 @@ public class SubscriptionStateSpecs
         
         var combinedEvents = tag1Events.Concat(tag2Events).Concat(tag1and3Events).ToList();
         
-        var initial = new SubscriberState(TestSubscriber);
+        var initial = new SubscriberState(TestSubscriber).Apply(SubRequest1 with { Tags = ["test1", "test2", "test3", "test4"
+        ]});
         var atomicCounter = new AtomicCounter(0);
         
         // act
         var dataPage1 = SubscriberActor.CreateDataPage(combinedEvents, atomicCounter);
-        var updatedState = initial.Apply(SubRequest1);
+        var updatedState = initial.Apply(dataPage1);
         
         // assert
         dataPage1.OffsetsPerTag.Keys.Should().BeEquivalentTo(["test1", "test2", "test3"]);
         
         // check the offsets in the data page for each tag
-        dataPage1.OffsetsPerTag["test1"].Should().Be(Offset.Sequence(10));
+        dataPage1.OffsetsPerTag["test1"].Should().Be(Offset.Sequence(17));
         dataPage1.OffsetsPerTag["test2"].Should().Be(Offset.Sequence(5));
         dataPage1.OffsetsPerTag["test3"].Should().Be(Offset.Sequence(17));
+        dataPage1.PageId.Should().Be(new NonZeroInt(1));
+        dataPage1.Events.Should().BeEquivalentTo(combinedEvents.Select(c => c.Event));
         
+        // check that the updated delivery state is correct
+        
+        // we have an extra tag, test4, that wasn't used in the event stream  - that offset should remain at 0
+        updatedState.OffsetsPerTag.Keys.Should().BeEquivalentTo(["test1", "test2", "test3", "test4"]);
+        updatedState.OffsetsPerTag["test1"].Should().Be(Offset.Sequence(17));
+        updatedState.OffsetsPerTag["test2"].Should().Be(Offset.Sequence(5));
+        updatedState.OffsetsPerTag["test3"].Should().Be(Offset.Sequence(17));
+        updatedState.OffsetsPerTag["test4"].Should().Be(Offset.NoOffset());
     }
 }

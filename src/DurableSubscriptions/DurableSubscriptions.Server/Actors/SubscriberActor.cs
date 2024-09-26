@@ -157,11 +157,11 @@ public sealed class SubscriberActor : UntypedPersistentActor
                 if(tagData.TryGetValue(t, out var current))
                 {
                     if(e.Offset.CompareTo(current) > 0)
-                        tagData[e.PersistenceId] = e.Offset;
+                        tagData[t] = e.Offset;
                 }
                 else
                 {
-                    tagData[e.PersistenceId] = e.Offset;
+                    tagData[t] = e.Offset;
                 }
             }
         }
