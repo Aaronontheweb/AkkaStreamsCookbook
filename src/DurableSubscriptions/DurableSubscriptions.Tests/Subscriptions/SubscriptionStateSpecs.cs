@@ -1,4 +1,6 @@
 using Akka.Actor;
+using Akka.Persistence.Query;
+using Akka.Util.Internal;
 using DurableSubscriptions.Server.Actors;
 using DurableSubscriptions.Shared;
 using FluentAssertions;
@@ -16,21 +18,57 @@ public class SubscriptionStateSpecs
     // Added test2, lost test 3, keep test1 and 4 - and a bigger page size
     public static readonly SubscriptionMessages.RunSubscription SubRequest2 = new(TestSubscriber, new NonZeroInt(15),
         new[] { "test1", "test2", "test3" }, ActorRefs.Nobody);
-    
+
     [Fact]
     public void ShouldRemoveUnusedTags()
     {
         // arrange
         var initial = new SubscriberState(TestSubscriber);
-        
+
         // act1
         var updated = initial.Apply(SubRequest1);
         updated.OffsetsPerTag.Keys.Should().BeEquivalentTo(SubRequest1.Tags);
         updated.PageSize.Should().Be(RequestedPageSize);
-        
+
         // act2
         var updated2 = updated.Apply(SubRequest2);
         updated2.OffsetsPerTag.Keys.Should().BeEquivalentTo(SubRequest2.Tags);
         updated2.PageSize.Should().Be(new NonZeroInt(15));
+    }
+
+    // create a test that ensures that data pages only include the highest offsets for each tag
+    [Fact]
+    public void ShouldRespectPageSize()
+    {
+        // arrange
+        var productId = new ProductId("foo");
+        var e = new ProductEvents.ProductPurchased(productId, 10, 10d);
+        var tag1Events = Enumerable.Range(0, 4).Select(
+            c => new EventEnvelope(Offset.Sequence(c), "test1", c,
+                e, DateTime.UtcNow.Ticks, ["test1"])).ToList();
+        var tag2Events = Enumerable.Range(1, 5).Select(
+            c => new EventEnvelope(Offset.Sequence(c), "test2", c,
+                e, DateTime.UtcNow.Ticks, ["test2"])).ToList();
+        var tag1and3Events = Enumerable.Range(7, 11).Select(
+            c => new EventEnvelope(Offset.Sequence(c), "test1", c,
+                e, DateTime.UtcNow.Ticks, ["test1", "test3"])).ToList();
+        
+        var combinedEvents = tag1Events.Concat(tag2Events).Concat(tag1and3Events).ToList();
+        
+        var initial = new SubscriberState(TestSubscriber);
+        var atomicCounter = new AtomicCounter(0);
+        
+        // act
+        var dataPage1 = SubscriberActor.CreateDataPage(combinedEvents, atomicCounter);
+        var updatedState = initial.Apply(SubRequest1);
+        
+        // assert
+        dataPage1.OffsetsPerTag.Keys.Should().BeEquivalentTo(["test1", "test2", "test3"]);
+        
+        // check the offsets in the data page for each tag
+        dataPage1.OffsetsPerTag["test1"].Should().Be(Offset.Sequence(10));
+        dataPage1.OffsetsPerTag["test2"].Should().Be(Offset.Sequence(5));
+        dataPage1.OffsetsPerTag["test3"].Should().Be(Offset.Sequence(17));
+        
     }
 }

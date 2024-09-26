@@ -90,6 +90,7 @@ public sealed class SubscriberActor : UntypedPersistentActor
         {
             case DataPageStructure page:
             {
+                Become(PendingPageAck(page));
                 _remoteSubscriber.Tell(page);
                 break;
             }
@@ -145,7 +146,7 @@ public sealed class SubscriberActor : UntypedPersistentActor
         }
     }
     
-    private static DataPageStructure CreateDataPage(IReadOnlyList<EventEnvelope> events, AtomicCounter pageIdCounter)
+    public static DataPageStructure CreateDataPage(IReadOnlyList<EventEnvelope> events, AtomicCounter pageIdCounter)
     {
         // grab the largest offset per tag - bearing in mind there can be multiple tags per event
         var tagData = new Dictionary<string, Offset>();
@@ -168,7 +169,7 @@ public sealed class SubscriberActor : UntypedPersistentActor
         // ok, now filter all the events, so we include only the IProductEvent
         var productEvents = events.Select(e => e.Event).OfType<IProductEvent>().ToList();
         
-        return new DataPageStructure(tagData, productEvents, new NonZeroInt(pageIdCounter.GetAndIncrement()));
+        return new DataPageStructure(tagData, productEvents, new NonZeroInt(pageIdCounter.IncrementAndGet()));
     }
 }
 
@@ -207,5 +208,23 @@ public static class SubscriberStateExtensions
         state = state with {PageSize = pageSize, OffsetsPerTag = newOffsets};
 
         return state;
+    }
+    
+    public static SubscriberState Apply(this SubscriberState state, DataPageStructure page)
+    {
+        // need to merge the offsets from the data page into the current state
+        // there's a good chance not every page will have every tag
+        var newOffsets = state.OffsetsPerTag
+            .Select(x =>
+            {
+                if (page.OffsetsPerTag.TryGetValue(x.Key, out var newOffset))
+                {
+                    return new KeyValuePair<string, Offset>(x.Key, newOffset);
+                }
+
+                return x;
+            })
+            .ToDictionary();
+        return state with {OffsetsPerTag = newOffsets};
     }
 }
