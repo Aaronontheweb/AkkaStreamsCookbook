@@ -51,6 +51,12 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
                 // ignore
                 break;
             }
+            case AckInternalPageStream:
+            {
+                // we received an ack from the remote subscriber even though the subscription was not running
+                _log.Warning("Received ack from remote subscriber for even though subscription is not currently running");
+                break;
+            }
         }
     }
 
@@ -76,7 +82,7 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
             .Via(_subscriptionCancellation.Token.AsFlow<EventEnvelope>())
             .GroupedWithin(State.PageSize.Value, TimeSpan.FromSeconds(10))
             .Select(c => CreateDataPage(c.ToList(), _pageId))
-            .RunWith(Sink.ActorRefWithAck<DataPageStructure>(self, Start.Instance, PageAck.Instance, Completed.Instance,
+            .RunWith(Sink.ActorRefWithAck<DataPageStructure>(self, Start.Instance, AckInternalPageStream.Instance, Completed.Instance,
                 ex => new Status.Failure(ex)), _mat);
         
         Become(RunningSubscription);
@@ -91,20 +97,112 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
         {
             case DataPageStructure page:
             {
-                Become(PendingPageAck(page));
-                
+                Become(PendingPageAck(page, Sender));
+                SchedulePageTimer(new AckTimeout(page.PageId, 0, 5));
                 _remoteSubscriber.Tell(page);
+                break;
+            }
+            case SubscriptionMessages.RunSubscription run:
+            {
+                // we're already running a subscription, so we need to cancel it
+                ResetSubscription();
+                
+                // start a new one
+                HandleRun(run);
+                break;
+            }
+            case Terminated t when t.ActorRef.Equals(_remoteSubscriber):
+            {
+                _log.Warning("Remote subscriber terminated. Resetting subscription.");
+                ResetSubscription();
+                Become(OnCommand);
+                break;
+            }
+            case Status.Failure failure:
+            {
+                _log.Error(failure.Cause, "Failed to run subscription.");
+                ResetSubscription();
+                Become(OnCommand);
+                break;
+            }
+            case Completed:
+            {
+                _log.Info("Local stream has terminated.");
+                ResetSubscription();
+                Become(OnCommand);
                 break;
             }
         }
     }
 
-    private Receive PendingPageAck(DataPageStructure currentPage)
+    private void SchedulePageTimer(AckTimeout timeout)
+    {
+        if(timeout.RetryCount >= timeout.MaxRetries)
+        {
+            _log.Error("Failed to receive ack for page {0} after {1} attempts. Cancelling subscription.", timeout.PageId, timeout.MaxRetries);
+            ResetSubscription();
+            Become(OnCommand);
+            return;
+        }
+        Timers.StartSingleTimer($"ack-timeout-{timeout.PageId}", timeout with { RetryCount = timeout.RetryCount + 1}, TimeSpan.FromSeconds(5));
+    }
+    
+    private void UnschedulePageTimer(NonZeroInt pageId)
+    {
+        Timers.Cancel($"ack-timeout-{pageId}");
+    }
+
+    private void ResetSubscription()
+    {
+        _subscriptionCancellation?.Cancel();
+        _subscriptionCancellation = null;
+        if (_remoteSubscriber != null)
+            Context.Unwatch(_remoteSubscriber);
+    }
+
+    private Receive PendingPageAck(DataPageStructure currentPage, IActorRef localStreamSender)
     {
         return s =>
         {
             switch (s)
             {
+                case SubscriptionMessages.AckPage ackPage:
+                {
+                    _log.Debug("Received ack for page {0}", ackPage.PageId);
+                    UnschedulePageTimer(currentPage.PageId);
+                    State = State.Apply(currentPage);
+                    Become(RunningSubscription);
+                    localStreamSender.Tell(AckInternalPageStream.Instance);
+                    return true;
+                }
+                case AckTimeout timeout:
+                {
+                    _log.Warning("Failed to receive ack for page {0} after {1} attempts. Retrying.", timeout.PageId, timeout.RetryCount);
+                    SchedulePageTimer(timeout);
+                    _remoteSubscriber.Tell(currentPage);
+                    return true;
+                }
+                case Terminated t when t.ActorRef.Equals(_remoteSubscriber):
+                {
+                    _log.Warning("Remote subscriber terminated. Resetting subscription.");
+                    ResetSubscription();
+                    Become(OnCommand);
+                    return true;
+                }
+                case Status.Failure failure:
+                {
+                    _log.Error(failure.Cause, "Failed to run subscription.");
+                    ResetSubscription();
+                    Become(OnCommand);
+                    break;
+                }
+                case Completed:
+                {
+                    _log.Info("Local stream has terminated.");
+                    ResetSubscription();
+                    Become(OnCommand);
+                    return true;
+                }
                 default:
                     return false;
             }
@@ -132,10 +230,10 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
         }
     }
     
-    private sealed class PageAck
+    private sealed class AckInternalPageStream
     {
-        public static readonly PageAck Instance = new();
-        private PageAck()
+        public static readonly AckInternalPageStream Instance = new();
+        private AckInternalPageStream()
         {
         }
     }
@@ -148,7 +246,7 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
         }
     }
 
-    private sealed record AckTimeout(int RetryCount, int MaxRetries);
+    private sealed record AckTimeout(NonZeroInt PageId, int RetryCount, int MaxRetries);
     
     public static DataPageStructure CreateDataPage(IReadOnlyList<EventEnvelope> events, AtomicCounter pageIdCounter)
     {
