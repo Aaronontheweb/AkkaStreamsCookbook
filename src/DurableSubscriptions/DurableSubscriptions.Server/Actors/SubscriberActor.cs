@@ -27,7 +27,7 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
     private CancellationTokenSource? _subscriptionCancellation;
     private IActorRef? _remoteSubscriber;
 
-    private AtomicCounter _pageId = new AtomicCounter(0);
+    private AtomicCounter _pageId = new(0);
     public SubscriberState State { get; private set; }
 
     public SubscriberActor(SubscriberId subscriberId)
@@ -80,7 +80,7 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
         // merge the sources together
         var combined = StreamsHelper.CombineSources(sources);
         combined
-            .Via(_subscriptionCancellation.Token.AsFlow<EventEnvelope>())
+            .Via(_subscriptionCancellation.Token.AsFlow<EventEnvelope>(true))
             .GroupedWithin(State.PageSize.Value, TimeSpan.FromSeconds(10))
             .Select(c => CreateDataPage(State.SubscriberId, c.ToList(), _pageId))
             .RunWith(Sink.ActorRefWithAck<DataPageStructure>(self, Start.Instance, AckInternalPageStream.Instance,

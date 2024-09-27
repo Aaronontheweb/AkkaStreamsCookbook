@@ -54,7 +54,7 @@ hostBuilder.ConfigureServices((context, services) =>
                     StateStoreMode = StateStoreMode.DData,
                     Role = "subscriptions"
                 })
-            .WithActors((system, registry, resolver) =>
+            .WithActors((system, _, resolver) =>
             {
                 // populate some data
                 var props = resolver.Props<ProductEventGenerator>();
