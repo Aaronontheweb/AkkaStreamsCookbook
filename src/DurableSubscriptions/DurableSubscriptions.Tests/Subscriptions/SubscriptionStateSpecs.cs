@@ -72,7 +72,7 @@ public class SubscriptionStateSpecs
         dataPage1.OffsetsPerTag["test2"].Should().Be(Offset.Sequence(5));
         dataPage1.OffsetsPerTag["test3"].Should().Be(Offset.Sequence(17));
         dataPage1.PageId.Should().Be(new NonZeroInt(1));
-        dataPage1.Events.Should().BeEquivalentTo(combinedEvents.Select(c => c.Event));
+        dataPage1.Events.Select(c => c.e).Should().BeEquivalentTo(combinedEvents.Select(c => c.Event));
         
         // check that the updated delivery state is correct
         
