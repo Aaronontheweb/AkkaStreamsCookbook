@@ -13,7 +13,7 @@ using DurableSubscriptions.Shared;
 
 namespace DurableSubscriptions.Client.Actors;
 
-public sealed record SetSubscription(ChannelWriter<IProductEvent> EventsChannel)
+public sealed record SetSubscription(ChannelWriter<(long ordering, IProductEvent e)> EventsChannel)
     : INoSerializationVerificationNeeded;
 
 public sealed class ClientSubscriber : UntypedActor, IWithStash, IWithTimers
@@ -22,7 +22,7 @@ public sealed class ClientSubscriber : UntypedActor, IWithStash, IWithTimers
     private readonly ILoggingAdapter _log = Context.GetLogger();
     private readonly IActorRef _clusterClient;
     private IActorRef? _remotePublisher; // used to help us keep track if the SubscriberActor dies or moves
-    private ChannelWriter<IProductEvent>? _eventsChannel;
+    private ChannelWriter<(long ordering, IProductEvent e)>? _eventsChannel;
     private readonly SubscriptionMessages.RunSubscription _runSubscription;
 
     public ClientSubscriber(IActorRef clusterClient,

@@ -24,7 +24,7 @@ public sealed record SubscriberState(SubscriberId SubscriberId)
 public sealed record DataPageStructure(
     SubscriberId SubscriberId,
     Dictionary<string, Offset> OffsetsPerTag,
-    List<IProductEvent> Events,
+    List<(long offset, IProductEvent e)> Events,
     NonZeroInt PageId): IWithSubscriberId
 {
     public DataPage ToDataPage() => new(SubscriberId, PageId, Events);

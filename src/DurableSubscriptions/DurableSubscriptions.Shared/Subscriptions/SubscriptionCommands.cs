@@ -9,7 +9,7 @@ using Akka.Streams;
 
 namespace DurableSubscriptions.Shared;
 
-public sealed record DataPage(SubscriberId SubscriberId, NonZeroInt PageId, IReadOnlyList<IProductEvent> Events)
+public sealed record DataPage(SubscriberId SubscriberId, NonZeroInt PageId, IReadOnlyList<(long ordering, IProductEvent e)> Events)
     : IWithSubscriberId;
 
 public static class SubscriptionMessages

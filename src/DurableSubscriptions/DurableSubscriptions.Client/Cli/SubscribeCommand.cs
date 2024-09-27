@@ -45,7 +45,7 @@ public sealed class SubscribeCommand : AsyncCommand<SubscribeSettings>
         _ = ShutdownAppIfSubscriberDies();
         
         
-        var channel = Channel.CreateUnbounded<IProductEvent>();
+        var channel = Channel.CreateUnbounded<(long ordering, IProductEvent e)>();
         subscriber.Tell(new SetSubscription(channel.Writer));
         
         AnsiConsole.Markup("[bold green]Starting to stream events for the following tags:[/]");

@@ -296,7 +296,7 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
         }
 
         // ok, now filter all the events, so we include only the IProductEvent
-        var productEvents = events.Select(e => e.Event).OfType<IProductEvent>().ToList();
+        var productEvents = events.Select(e => (e.Offset.AsInstanceOf<Sequence>().Value, (IProductEvent)e.Event)).ToList();
 
         return new DataPageStructure(subscriberId, tagData, productEvents,
             new NonZeroInt(pageIdCounter.IncrementAndGet()));
