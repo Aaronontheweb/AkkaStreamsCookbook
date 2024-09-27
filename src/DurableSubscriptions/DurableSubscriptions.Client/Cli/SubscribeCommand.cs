@@ -6,7 +6,9 @@
 
 using System.Threading.Channels;
 using Akka.Actor;
+using Akka.Cluster.Tools.Client;
 using Akka.DependencyInjection;
+using Akka.Hosting;
 using DurableSubscriptions.Client.Actors;
 using DurableSubscriptions.Shared;
 using Microsoft.Extensions.Hosting;
@@ -32,12 +34,16 @@ public sealed class SubscribeCommand : AsyncCommand<SubscribeSettings>
         var tagsArray = settings.Tags!.Split(',', StringSplitOptions.RemoveEmptyEntries)
             .Select(tag => tag.Trim())
             .ToArray();
-        
-        var resolver = DependencyResolver.For(_system);
+
+        var actorRegistry = ActorRegistry.For(_system);
         var runCommand = new SubscriptionMessages.RunSubscription(new SubscriberId(settings.SubscriberId!),
             new NonZeroInt(settings.PageSize), tagsArray, ActorRefs.Nobody);
-        var props = resolver.Props<ClientSubscriber>(runCommand);
+        var clusterClient = await actorRegistry.GetAsync<ClusterClient>();
+        var props = Props.Create(() => new ClientSubscriber(clusterClient, runCommand));
         var subscriber = _system.ActorOf(props, "subscriber");
+
+        _ = ShutdownAppIfSubscriberDies();
+        
         
         var channel = Channel.CreateUnbounded<IProductEvent>();
         subscriber.Tell(new SetSubscription(channel.Writer));
@@ -57,5 +63,11 @@ public sealed class SubscribeCommand : AsyncCommand<SubscribeSettings>
         }
         
         return 0;
+
+        async Task ShutdownAppIfSubscriberDies()
+        {
+            await subscriber.WatchAsync();
+            _lifetime.StopApplication();
+        }
     }
 }

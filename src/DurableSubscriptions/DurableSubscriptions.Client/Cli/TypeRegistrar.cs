@@ -24,7 +24,9 @@ public sealed class TypeRegistrar : ITypeRegistrar
 
     public ITypeResolver Build()
     {
-        return new TypeResolver(_builder.Build());
+        var host = _builder.Build();
+        host.StartAsync(); // make sure the host starts
+        return new TypeResolver(host);
     }
 
     public void Register(Type service, Type implementation)

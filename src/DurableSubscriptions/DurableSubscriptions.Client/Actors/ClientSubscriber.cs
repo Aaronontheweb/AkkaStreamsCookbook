@@ -25,12 +25,12 @@ public sealed class ClientSubscriber : UntypedActor, IWithStash, IWithTimers
     private ChannelWriter<IProductEvent>? _eventsChannel;
     private readonly SubscriptionMessages.RunSubscription _runSubscription;
 
-    public ClientSubscriber(IRequiredActor<ClusterClient> clusterClient,
+    public ClientSubscriber(IActorRef clusterClient,
         SubscriptionMessages.RunSubscription runSubscription)
     {
         // we need to make sure that the Sink is set to Self
         _runSubscription = runSubscription with {Sink = Self};
-        _clusterClient = clusterClient.ActorRef;
+        _clusterClient = clusterClient;
     }
 
     protected override void PreStart()
@@ -40,8 +40,8 @@ public sealed class ClientSubscriber : UntypedActor, IWithStash, IWithTimers
 
     private void TryStartSubscription()
     {
-        _clusterClient.Tell(new ClusterClient.SendToAll("/system/sharding/subscriptions",
-            _runSubscription));
+        _clusterClient.Tell(new ClusterClient.Send("/system/sharding/subscriptions",
+            _runSubscription, localAffinity:true));
         Timers.StartSingleTimer("subscription-start-timeout", _runSubscription, TimeSpan.FromSeconds(5));
     }
 

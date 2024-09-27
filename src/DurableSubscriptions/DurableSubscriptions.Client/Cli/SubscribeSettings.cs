@@ -12,7 +12,7 @@ namespace DurableSubscriptions.Client.Cli;
 
 public sealed class SubscribeSettings : CommandSettings
 {
-    [CommandOption("-t|--tags")]
+    [CommandArgument(0, "[tags]")]
     [Description("A list of tags to subscribe to, separated by spaces (e.g., tag1 tag2 tag3)")]
     public string? Tags { get; set; }
 
@@ -22,7 +22,7 @@ public sealed class SubscribeSettings : CommandSettings
 
     [CommandOption("-p|--page-size")]
     [Description("Page size for the data")]
-    public int PageSize { get; set; }
+    public int PageSize { get; set; } = 10;
 
     public override ValidationResult Validate()
     {

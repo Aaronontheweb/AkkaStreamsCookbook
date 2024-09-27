@@ -55,6 +55,10 @@ hostBuilder.ConfigureServices((context, services) =>
 var registrar = new TypeRegistrar(hostBuilder);
 
 // Set up Spectre.Console CommandApp with DI
-var app = new CommandApp<SubscribeCommand>(registrar);
+var app = new CommandApp(registrar);
+app.Configure(config =>
+{
+    config.AddCommand<SubscribeCommand>("subscribe"); 
+});
 
-await app.RunAsync(Environment.GetCommandLineArgs());
+await app.RunAsync(Environment.GetCommandLineArgs().Skip(1));

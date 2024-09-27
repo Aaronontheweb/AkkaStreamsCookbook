@@ -62,7 +62,7 @@ hostBuilder.ConfigureServices((context, services) =>
             })
             .WithShardRegion<SubscriberActor>("subscriptions",
                 s => Props.Create(() => new SubscriberActor(new SubscriberId(s))),
-                HashCodeMessageExtractor.Create(50, EntityIdExtractor), new ShardOptions()
+                HashCodeMessageExtractor.Create(50, SubscriberIdExtractor), new ShardOptions()
                 {
                     StateStoreMode = StateStoreMode.DData,
                     Role = "subscriptions"
@@ -83,6 +83,16 @@ hostBuilder.ConfigureServices((context, services) =>
             if (arg is IWithProductId withProductId)
             {
                 return withProductId.ProductId.Id;
+            }
+
+            return null;
+        }
+        
+        string? SubscriberIdExtractor(object arg)
+        {
+            if (arg is IWithSubscriberId withSubscriberId)
+            {
+                return withSubscriberId.SubscriberId.Id;
             }
 
             return null;
