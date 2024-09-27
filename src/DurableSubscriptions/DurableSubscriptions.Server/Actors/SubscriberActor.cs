@@ -244,7 +244,7 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
                 case DeleteMessagesSuccess:
                 {
                     // ignore
-                    break;
+                    return true;
                 }
                 case Completed:
                 {
