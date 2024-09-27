@@ -12,9 +12,9 @@ namespace DurableSubscriptions.Client.Cli;
 
 public sealed class SubscribeSettings : CommandSettings
 {
-    [CommandArgument(0, "[tags]")]
+    [CommandOption("-t|--tags")]
     [Description("A list of tags to subscribe to, separated by spaces (e.g., tag1 tag2 tag3)")]
-    public string[]? Tags { get; set; }
+    public string? Tags { get; set; }
 
     [CommandOption("-s|--subscriber-id")]
     [Description("Subscriber ID for the subscription")]
@@ -27,12 +27,22 @@ public sealed class SubscribeSettings : CommandSettings
     public override ValidationResult Validate()
     {
         // Validate Tags
-        if (Tags == null || Tags.Length == 0)
+        if (string.IsNullOrWhiteSpace(Tags))
         {
             return ValidationResult.Error("You must provide at least one tag.");
         }
 
-        foreach (var tag in Tags)
+        // Split tags by comma and trim spaces
+        var tagsArray = Tags.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(tag => tag.Trim())
+            .ToArray();
+
+        if (tagsArray.Length == 0)
+        {
+            return ValidationResult.Error("Invalid tag format. Provide at least one tag.");
+        }
+
+        foreach (var tag in tagsArray)
         {
             if (string.IsNullOrWhiteSpace(tag))
             {

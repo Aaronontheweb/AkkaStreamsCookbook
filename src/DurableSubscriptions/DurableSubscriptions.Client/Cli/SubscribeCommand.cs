@@ -28,14 +28,28 @@ public sealed class SubscribeCommand : AsyncCommand<SubscribeSettings>
 
     public override async Task<int> ExecuteAsync(CommandContext context, SubscribeSettings settings)
     {
+        // Split tags by comma and trim spaces
+        var tagsArray = settings.Tags!.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(tag => tag.Trim())
+            .ToArray();
+        
         var resolver = DependencyResolver.For(_system);
         var runCommand = new SubscriptionMessages.RunSubscription(new SubscriberId(settings.SubscriberId!),
-            new NonZeroInt(settings.PageSize), settings.Tags!, ActorRefs.Nobody);
+            new NonZeroInt(settings.PageSize), tagsArray, ActorRefs.Nobody);
         var props = resolver.Props<ClientSubscriber>(runCommand);
         var subscriber = _system.ActorOf(props, "subscriber");
         
         var channel = Channel.CreateUnbounded<IProductEvent>();
         subscriber.Tell(new SetSubscription(channel.Writer));
+        
+        AnsiConsole.Markup("[bold green]Starting to stream events for the following tags:[/]");
+        foreach (var tag in tagsArray)
+        {
+            AnsiConsole.MarkupLine($"[yellow]- {tag}[/]");
+        }
+
+        AnsiConsole.MarkupLine($"[bold green]Subscriber ID:[/] [yellow]{settings.SubscriberId}[/]");
+        AnsiConsole.MarkupLine($"[bold green]Page Size:[/] [yellow]{settings.PageSize}[/]");
         
         await foreach(var e in channel.Reader.ReadAllAsync(_lifetime.ApplicationStopping))
         {
