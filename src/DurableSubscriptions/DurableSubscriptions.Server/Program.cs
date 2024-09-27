@@ -66,7 +66,7 @@ hostBuilder.ConfigureServices((context, services) =>
                 {
                     StateStoreMode = StateStoreMode.DData,
                     Role = "subscriptions",
-                    PassivateIdleEntityAfter = null // don't passivate
+                    ShouldPassivateIdleEntities = false
                 })
             .WithClusterClientReceptionist(role:"subscriptions")
             .AddStartup((system, registry) =>

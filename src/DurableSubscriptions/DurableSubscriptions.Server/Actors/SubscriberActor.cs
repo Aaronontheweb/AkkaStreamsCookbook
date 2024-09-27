@@ -106,11 +106,7 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
             }
             case SubscriptionMessages.RunSubscription run:
             {
-                // we're already running a subscription, so we need to cancel it
-                ResetSubscription();
-
-                // start a new one
-                HandleRun(run);
+                // ignore
                 break;
             }
             case Start:
@@ -216,7 +212,7 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
                     _log.Warning("Failed to receive ack for page {0} after {1} attempts. Retrying.", timeout.PageId,
                         timeout.RetryCount);
                     SchedulePageTimer(timeout);
-                    _remoteSubscriber.Tell(currentPage);
+                    _remoteSubscriber.Tell(currentPage.ToDataPage());
                     return true;
                 }
                 case SaveSnapshotSuccess success:

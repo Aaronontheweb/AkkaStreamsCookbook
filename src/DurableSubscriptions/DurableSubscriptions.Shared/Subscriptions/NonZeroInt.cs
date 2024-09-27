@@ -73,4 +73,9 @@ public readonly struct NonZeroInt : IEquatable<NonZeroInt>, IComparable<NonZeroI
     {
         return left.CompareTo(right) >= 0;
     }
+
+    public override string ToString()
+    {
+        return Value.ToString();
+    }
 }
