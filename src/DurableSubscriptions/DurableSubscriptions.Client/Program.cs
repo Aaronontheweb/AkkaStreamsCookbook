@@ -1,11 +1,10 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using Akka.Actor;
+﻿using Akka.Actor;
 using Akka.Cluster.Hosting;
 using Akka.Cluster.Tools.Client;
 using Akka.Hosting;
 using Akka.Remote.Hosting;
-using DurableSubscriptions.Client.Actors;
+using DurableSubscriptions.Client.Cli;
+using Spectre.Console.Cli;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -53,6 +52,14 @@ hostBuilder.ConfigureServices((context, services) =>
 
 var host = hostBuilder.Build();
 
+// Create the type registrar for Spectre.Console
+var registrar = new TypeRegistrar(host.Services);
+
 var completionTask = host.RunAsync();
+
+// Set up Spectre.Console CommandApp with DI
+var app = new CommandApp<SubscribeCommand>(new TypeRegistrar(host.Services));
+
+await app.RunAsync(Environment.GetCommandLineArgs());
 
 await completionTask; // wait for the host to shut down

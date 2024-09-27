@@ -28,7 +28,8 @@ public sealed class ClientSubscriber : UntypedActor, IWithStash, IWithTimers
     public ClientSubscriber(IRequiredActor<ClusterClient> clusterClient,
         SubscriptionMessages.RunSubscription runSubscription)
     {
-        _runSubscription = runSubscription;
+        // we need to make sure that the Sink is set to Self
+        _runSubscription = runSubscription with {Sink = Self};
         _clusterClient = clusterClient.ActorRef;
     }
 
