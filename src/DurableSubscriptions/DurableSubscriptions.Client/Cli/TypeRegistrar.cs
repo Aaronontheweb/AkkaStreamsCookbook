@@ -4,52 +4,63 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics;
+using Microsoft.Extensions.Hosting;
+
 namespace DurableSubscriptions.Client.Cli;
 
 using Spectre.Console.Cli;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 
-public class TypeRegistrar : ITypeRegistrar
+public sealed class TypeRegistrar : ITypeRegistrar
 {
-    private readonly IServiceProvider _services;
+    private readonly IHostBuilder _builder;
 
-    public TypeRegistrar(IServiceProvider services)
+    public TypeRegistrar(IHostBuilder builder)
     {
-        _services = services;
+        _builder = builder;
     }
 
     public ITypeResolver Build()
     {
-        return new TypeResolver(_services);
+        return new TypeResolver(_builder.Build());
     }
 
     public void Register(Type service, Type implementation)
     {
-        throw new NotSupportedException();
+        _builder.ConfigureServices((_, services) => services.AddSingleton(service, implementation));
     }
 
     public void RegisterInstance(Type service, object implementation)
     {
-        throw new NotSupportedException();
+        _builder.ConfigureServices((_, services) => services.AddSingleton(service, implementation));
     }
 
-    public void RegisterLazy(Type service, Func<object> factory)
+    public void RegisterLazy(Type service, Func<object> func)
     {
-        throw new NotSupportedException();
+        if (func is null) throw new ArgumentNullException(nameof(func));
+
+        _builder.ConfigureServices((_, services) => services.AddSingleton(service, _ => func()));
     }
 }
 
-public class TypeResolver : ITypeResolver
+public sealed class TypeResolver : ITypeResolver, IDisposable
 {
-    private readonly IServiceProvider _provider;
+    private readonly IHost _host;
 
-    public TypeResolver(IServiceProvider provider)
+    public TypeResolver(IHost provider)
     {
-        _provider = provider;
+        _host = provider ?? throw new ArgumentNullException(nameof(provider));
     }
 
-    public object Resolve(Type type)
+    public object? Resolve(Type? type)
     {
-        return _provider.GetService(type);
+        return type != null ? _host.Services.GetService(type) : null;
+    }
+
+    public void Dispose()
+    {
+        _host.Dispose();
     }
 }

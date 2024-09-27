@@ -26,7 +26,7 @@ hostBuilder.ConfigureLogging(builder => { builder.AddConsole(); });
 hostBuilder.ConfigureServices((context, services) =>
 {
     // extract the initial contact points from config
-    var initialContacts = context.Configuration.GetSection("Akka:ClusterClientSettings:IntialContacts")
+    var initialContacts = context.Configuration.GetSection("Akka:ClusterClientSettings:InitialContacts")
         .Get<string[]>()
         .Select(Address.Parse)
         .ToArray();
@@ -50,16 +50,11 @@ hostBuilder.ConfigureServices((context, services) =>
     });
 });
 
-var host = hostBuilder.Build();
 
 // Create the type registrar for Spectre.Console
-var registrar = new TypeRegistrar(host.Services);
-
-var completionTask = host.RunAsync();
+var registrar = new TypeRegistrar(hostBuilder);
 
 // Set up Spectre.Console CommandApp with DI
-var app = new CommandApp<SubscribeCommand>(new TypeRegistrar(host.Services));
+var app = new CommandApp<SubscribeCommand>(registrar);
 
 await app.RunAsync(Environment.GetCommandLineArgs());
-
-await completionTask; // wait for the host to shut down
