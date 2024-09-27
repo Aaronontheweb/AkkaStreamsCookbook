@@ -57,6 +57,7 @@ public sealed class ClientSubscriber : UntypedActor, IWithStash, IWithTimers
                 _log.Info("Successfully started subscription for {0} on-time", _runSubscription.SubscriberId);
                 _remotePublisher = Sender;
                 Context.Watch(_remotePublisher);
+                Timers.CancelAll(); // just in case
                 TryToTransitionToReady();
                 break;
             case SubscriptionMessages.RunSubscription:

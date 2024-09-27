@@ -133,6 +133,11 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
                 Become(OnCommand);
                 break;
             }
+            case SaveSnapshotSuccess success:
+            {
+                HandleSavedSnapshot(success);
+                break;
+            }
             case Completed:
             {
                 _log.Info("Local stream has terminated.");
@@ -189,6 +194,15 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
                     State = State.Apply(currentPage);
                     Become(RunningSubscription);
                     localStreamSender.Tell(AckInternalPageStream.Instance);
+                    Persist(State, _ =>
+                    {
+                        // we need to persist the state of the subscriber
+                        // so that we can recover it in the event of a crash
+                        _log.Debug("Persisted subscriber state");
+                            
+                        if(LastSequenceNr % 10 == 0)
+                            SaveSnapshot(State);
+                    });
                     return true;
                 }
                 case SubscriptionMessages.AckPage ackPage:
@@ -203,6 +217,11 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
                         timeout.RetryCount);
                     SchedulePageTimer(timeout);
                     _remoteSubscriber.Tell(currentPage);
+                    return true;
+                }
+                case SaveSnapshotSuccess success:
+                {
+                    HandleSavedSnapshot(success);
                     return true;
                 }
                 case Terminated t when t.ActorRef.Equals(_remoteSubscriber):
@@ -230,6 +249,13 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
                     return false;
             }
         };
+    }
+
+    private void HandleSavedSnapshot(SaveSnapshotSuccess success)
+    {
+        _log.Debug("Successfully saved snapshot");
+        DeleteSnapshots(new SnapshotSelectionCriteria(success.Metadata.SequenceNr - 1));
+        DeleteMessages(success.Metadata.SequenceNr);
     }
 
     protected override void OnRecover(object message)
