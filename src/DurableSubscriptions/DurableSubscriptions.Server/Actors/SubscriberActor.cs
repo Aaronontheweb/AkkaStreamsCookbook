@@ -286,4 +286,10 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
     }
 
     public ITimerScheduler Timers { get; set; } = null!;
+
+    protected override void PostStop()
+    {
+        // in the event that we're stopped, we need to let the remote subscriber know
+        _remoteSubscriber?.Tell(new SubscriptionMessages.SubscriptionTerminated(State.SubscriberId));
+    }
 }

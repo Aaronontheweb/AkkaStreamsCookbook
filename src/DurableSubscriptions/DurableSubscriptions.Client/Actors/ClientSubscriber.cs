@@ -24,6 +24,7 @@ public class ClientSubscriber : UntypedActor, IWithStash, IWithTimers
 {
     // needs to be sent to us by Spectre.Console
     private readonly IActorRef _clusterClient;
+    private IActorRef? _remotePublisher; // used to help us keep track if the SubscriberActor dies or moves
     private ChannelWriter<IProductEvent>? _eventsChannel;
     private readonly SubscriptionMessages.RunSubscription _runSubscription;
 
