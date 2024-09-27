@@ -61,7 +61,7 @@ public class SubscriptionStateSpecs
         var atomicCounter = new AtomicCounter(0);
         
         // act
-        var dataPage1 = SubscriberActor.CreateDataPage(combinedEvents, atomicCounter);
+        var dataPage1 = SubscriberActor.CreateDataPage(TestSubscriber, combinedEvents, atomicCounter);
         var updatedState = initial.Apply(dataPage1);
         
         // assert

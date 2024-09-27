@@ -21,15 +21,14 @@ public sealed record SubscriberState(SubscriberId SubscriberId)
     public Dictionary<string, Offset> OffsetsPerTag { get; init; } = new();
 }
 
-public sealed record DataPage(NonZeroInt PageId, IReadOnlyList<IProductEvent> Events);
-
 public sealed record DataPageStructure(
+    SubscriberId SubscriberId,
     Dictionary<string, Offset> OffsetsPerTag,
     List<IProductEvent> Events,
-    NonZeroInt PageId)
+    NonZeroInt PageId): IWithSubscriberId
 {
-    public DataPage ToDataPage() => new(PageId, Events);
-}
+    public DataPage ToDataPage() => new(SubscriberId, PageId, Events);
+} 
 
 public static class SubscriberStateExtensions
 {

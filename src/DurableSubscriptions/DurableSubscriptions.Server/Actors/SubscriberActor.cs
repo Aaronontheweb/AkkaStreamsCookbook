@@ -13,7 +13,6 @@ using Akka.Persistence.Query;
 using Akka.Persistence.Sql.Query;
 using Akka.Streams;
 using Akka.Streams.Dsl;
-using Akka.Streams.Implementation;
 using Akka.Util.Internal;
 using DurableSubscriptions.Shared;
 
@@ -27,16 +26,16 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
 
     private CancellationTokenSource? _subscriptionCancellation;
     private IActorRef? _remoteSubscriber;
-    
+
     private AtomicCounter _pageId = new AtomicCounter(0);
-    public SubscriberState State { get; private set; } 
-    
+    public SubscriberState State { get; private set; }
+
     public SubscriberActor(SubscriberId subscriberId)
     {
         PersistenceId = $"subscriber-{subscriberId.Id}";
         State = new SubscriberState(subscriberId);
     }
-    
+
     protected override void OnCommand(object message)
     {
         switch (message)
@@ -54,7 +53,8 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
             case AckInternalPageStream:
             {
                 // we received an ack from the remote subscriber even though the subscription was not running
-                _log.Warning("Received ack from remote subscriber for even though subscription is not currently running");
+                _log.Warning(
+                    "Received ack from remote subscriber for even though subscription is not currently running");
                 break;
             }
         }
@@ -66,29 +66,30 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
         Context.Watch(_remoteSubscriber); // if they die or the connection does, we'll reset
         _remoteSubscriber.Tell(new SubscriptionMessages.SubscriptionStarted(State.SubscriberId));
         _subscriptionCancellation = new CancellationTokenSource();
-        
+
         // update our state
         State = State.Apply(run);
-        
+
         var readJournal = PersistenceQuery.Get(Context.System)
             .ReadJournalFor<SqlReadJournal>(SqlReadJournal.Identifier);
         var self = Self;
-        
+
         // for each tag, we need to start an EventsByTag query
         var sources = State.OffsetsPerTag.Select(c => readJournal.EventsByTag(c.Key, c.Value)).ToList();
-        
+
         // merge the sources together
         var combined = StreamsHelper.CombineSources(sources);
         combined
             .Via(_subscriptionCancellation.Token.AsFlow<EventEnvelope>())
             .GroupedWithin(State.PageSize.Value, TimeSpan.FromSeconds(10))
-            .Select(c => CreateDataPage(c.ToList(), _pageId))
-            .RunWith(Sink.ActorRefWithAck<DataPageStructure>(self, Start.Instance, AckInternalPageStream.Instance, Completed.Instance,
+            .Select(c => CreateDataPage(State.SubscriberId, c.ToList(), _pageId))
+            .RunWith(Sink.ActorRefWithAck<DataPageStructure>(self, Start.Instance, AckInternalPageStream.Instance,
+                Completed.Instance,
                 ex => new Status.Failure(ex)), _mat);
-        
+
         Become(RunningSubscription);
     }
-    
+
     /// <summary>
     /// Occurs after the client subscribes to the stream.
     /// </summary>
@@ -107,9 +108,15 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
             {
                 // we're already running a subscription, so we need to cancel it
                 ResetSubscription();
-                
+
                 // start a new one
                 HandleRun(run);
+                break;
+            }
+            case Start:
+            {
+                // need to ACK the start of the stream
+                Sender.Tell(AckInternalPageStream.Instance);
                 break;
             }
             case Terminated t when t.ActorRef.Equals(_remoteSubscriber):
@@ -138,16 +145,19 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
 
     private void SchedulePageTimer(AckTimeout timeout)
     {
-        if(timeout.RetryCount >= timeout.MaxRetries)
+        if (timeout.RetryCount >= timeout.MaxRetries)
         {
-            _log.Error("Failed to receive ack for page {0} after {1} attempts. Cancelling subscription.", timeout.PageId, timeout.MaxRetries);
+            _log.Error("Failed to receive ack for page {0} after {1} attempts. Cancelling subscription.",
+                timeout.PageId, timeout.MaxRetries);
             ResetSubscription();
             Become(OnCommand);
             return;
         }
-        Timers.StartSingleTimer($"ack-timeout-{timeout.PageId}", timeout with { RetryCount = timeout.RetryCount + 1}, TimeSpan.FromSeconds(5));
+
+        Timers.StartSingleTimer($"ack-timeout-{timeout.PageId}", timeout with { RetryCount = timeout.RetryCount + 1 },
+            TimeSpan.FromSeconds(5));
     }
-    
+
     private void UnschedulePageTimer(NonZeroInt pageId)
     {
         Timers.Cancel($"ack-timeout-{pageId}");
@@ -156,6 +166,7 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
     private void ResetSubscription()
     {
         _subscriptionCancellation?.Cancel();
+        _subscriptionCancellation?.Dispose();
         _subscriptionCancellation = null;
         if (_remoteSubscriber != null)
         {
@@ -163,7 +174,6 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
             _remoteSubscriber.Tell(new SubscriptionMessages.SubscriptionTerminated(State.SubscriberId));
             Context.Unwatch(_remoteSubscriber);
         }
-           
     }
 
     private Receive PendingPageAck(DataPageStructure currentPage, IActorRef localStreamSender)
@@ -183,12 +193,14 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
                 }
                 case SubscriptionMessages.AckPage ackPage:
                 {
-                    _log.Warning("Received ack for page {0} but we were expecting ack for page {1}. Ignoring.", ackPage.PageId, currentPage.PageId);
+                    _log.Warning("Received ack for page {0} but we were expecting ack for page {1}. Ignoring.",
+                        ackPage.PageId, currentPage.PageId);
                     return true;
                 }
                 case AckTimeout timeout:
                 {
-                    _log.Warning("Failed to receive ack for page {0} after {1} attempts. Retrying.", timeout.PageId, timeout.RetryCount);
+                    _log.Warning("Failed to receive ack for page {0} after {1} attempts. Retrying.", timeout.PageId,
+                        timeout.RetryCount);
                     SchedulePageTimer(timeout);
                     _remoteSubscriber.Tell(currentPage);
                     return true;
@@ -236,40 +248,44 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
     private sealed class Start
     {
         public static readonly Start Instance = new();
+
         private Start()
         {
         }
     }
-    
+
     private sealed class AckInternalPageStream
     {
         public static readonly AckInternalPageStream Instance = new();
+
         private AckInternalPageStream()
         {
         }
     }
-    
+
     private sealed class Completed : IDeadLetterSuppression
     {
         public static readonly Completed Instance = new();
+
         private Completed()
         {
         }
     }
 
     private sealed record AckTimeout(NonZeroInt PageId, int RetryCount, int MaxRetries);
-    
-    public static DataPageStructure CreateDataPage(IReadOnlyList<EventEnvelope> events, AtomicCounter pageIdCounter)
+
+    public static DataPageStructure CreateDataPage(SubscriberId subscriberId, IReadOnlyList<EventEnvelope> events,
+        AtomicCounter pageIdCounter)
     {
         // grab the largest offset per tag - bearing in mind there can be multiple tags per event
         var tagData = new Dictionary<string, Offset>();
-        foreach(var e in events)
+        foreach (var e in events)
         {
             foreach (var t in e.Tags)
             {
-                if(tagData.TryGetValue(t, out var current))
+                if (tagData.TryGetValue(t, out var current))
                 {
-                    if(e.Offset.CompareTo(current) > 0)
+                    if (e.Offset.CompareTo(current) > 0)
                         tagData[t] = e.Offset;
                 }
                 else
@@ -278,11 +294,12 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
                 }
             }
         }
-        
+
         // ok, now filter all the events, so we include only the IProductEvent
         var productEvents = events.Select(e => e.Event).OfType<IProductEvent>().ToList();
-        
-        return new DataPageStructure(tagData, productEvents, new NonZeroInt(pageIdCounter.IncrementAndGet()));
+
+        return new DataPageStructure(subscriberId, tagData, productEvents,
+            new NonZeroInt(pageIdCounter.IncrementAndGet()));
     }
 
     public ITimerScheduler Timers { get; set; } = null!;
