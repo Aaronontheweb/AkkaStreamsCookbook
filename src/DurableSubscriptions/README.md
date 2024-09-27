@@ -27,13 +27,13 @@ This application is compromised of two parts:
 To run the server, execute the following command (from the directory of this file):
 
 ```bash
-dotnet run --p project DurableSubscriptions.Server
+dotnet run --project DurableSubscriptions.Server
 ```
 
 To run the client, execute the following command (from the directory of this file):
 
 ```bash
-dotnet run --p project DurableSubscriptions.Client -- -- subscribe {tag1,tag2,tag3} --subscriber-id {yourSubscriberId} [--page-size 10]
+dotnet run --project DurableSubscriptions.Client -- subscribe {tag1,tag2,tag3} --subscriber-id {yourSubscriberId} [--page-size 10]
 ```
 
 ### Available Tags
@@ -47,3 +47,9 @@ The tags that have data available are:
 * `data-platinum`
 
 You can use any arbitrary tags you want, but these are the ones for which we automatically generate data in the server.
+
+### Example Client Execution
+
+```bash
+dotnet run --project DurableSubscriptions.Client -- subscribe product-oil,product-gold --subscriber-id goldOil1
+```
