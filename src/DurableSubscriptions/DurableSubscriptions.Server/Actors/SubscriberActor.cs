@@ -62,8 +62,9 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
 
     private void HandleRun(SubscriptionMessages.RunSubscription run)
     {
-        Context.Watch(_remoteSubscriber); // if they die or the connection does, we'll reset
         _remoteSubscriber = run.Sink;
+        Context.Watch(_remoteSubscriber); // if they die or the connection does, we'll reset
+        _remoteSubscriber.Tell(new SubscriptionMessages.SubscriptionStarted(State.SubscriberId));
         _subscriptionCancellation = new CancellationTokenSource();
         
         // update our state

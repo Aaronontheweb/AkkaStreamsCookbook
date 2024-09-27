@@ -1,6 +1,7 @@
 ﻿using Akka.Actor;
 using Akka.Cluster.Hosting;
 using Akka.Cluster.Sharding;
+using Akka.Cluster.Tools.Client;
 using Akka.Hosting;
 using Akka.Persistence.Sql.Config;
 using Akka.Persistence.Sql.Hosting;
@@ -58,6 +59,22 @@ hostBuilder.ConfigureServices((context, services) =>
                 // populate some data
                 var props = resolver.Props<ProductEventGenerator>();
                 var generator = system.ActorOf(props, "event-generator");
+            })
+            .WithShardRegion<SubscriberActor>("subscriptions",
+                s => Props.Create(() => new SubscriberActor(new SubscriberId(s))),
+                HashCodeMessageExtractor.Create(50, EntityIdExtractor), new ShardOptions()
+                {
+                    StateStoreMode = StateStoreMode.DData,
+                    Role = "subscriptions"
+                })
+            .WithClusterClientReceptionist(role:"subscriptions")
+            .AddStartup((system, registry) =>
+            {
+                // register the subscriber actor shardRegion
+                var receptionist = ClusterClientReceptionist.Get(system);
+                
+                // this will register the /system/sharding/subscriptions path
+                receptionist.RegisterService(registry.Get<SubscriberActor>());
             });
         return;
 

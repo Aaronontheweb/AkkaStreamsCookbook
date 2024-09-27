@@ -23,5 +23,7 @@ public static class SubscriptionMessages
 
     public sealed record AckPage(SubscriberId SubscriberId, NonZeroInt PageId) : IWithSubscriberId;
     
+    public sealed record SubscriptionStarted(SubscriberId SubscriberId) : IWithSubscriberId;
+    
     public sealed record SubscriptionTerminated(SubscriberId SubscriberId) : IWithSubscriberId;
 }
