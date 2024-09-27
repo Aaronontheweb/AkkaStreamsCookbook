@@ -100,7 +100,7 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
             {
                 Become(PendingPageAck(page, Sender));
                 SchedulePageTimer(new AckTimeout(page.PageId, 0, 5));
-                _remoteSubscriber.Tell(page);
+                _remoteSubscriber.Tell(page.ToDataPage());
                 break;
             }
             case SubscriptionMessages.RunSubscription run:
