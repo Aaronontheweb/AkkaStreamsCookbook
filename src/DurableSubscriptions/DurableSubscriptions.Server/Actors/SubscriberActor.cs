@@ -134,6 +134,12 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
                 HandleSavedSnapshot(success);
                 break;
             }
+            case DeleteSnapshotsSuccess:
+            case DeleteMessagesSuccess:
+            {
+                // ignore
+                break;
+            }
             case Completed:
             {
                 _log.Info("Local stream has terminated.");
@@ -233,6 +239,12 @@ public sealed class SubscriberActor : UntypedPersistentActor, IWithTimers
                     ResetSubscription();
                     Become(OnCommand);
                     return true;
+                }
+                case DeleteSnapshotsSuccess:
+                case DeleteMessagesSuccess:
+                {
+                    // ignore
+                    break;
                 }
                 case Completed:
                 {
