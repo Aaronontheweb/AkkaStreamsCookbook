@@ -9,7 +9,7 @@
     <PackageVersion Include="Akka.Streams" Version="1.5.28" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.49.1" />
     <PackageVersion Include="Universe.CpuUsage" Version="2.2.497.598" />
-    <PackageVersion Include="xunit" Version="2.9.1" />
+    <PackageVersion Include="xunit" Version="2.9.2" />
   </ItemGroup>
   <!-- Testing Packages -->
   <ItemGroup>
