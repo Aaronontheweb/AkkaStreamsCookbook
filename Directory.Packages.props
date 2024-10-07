@@ -9,7 +9,7 @@
   </PropertyGroup>
   <!-- Akka.NET Package Versions -->
   <ItemGroup>
-    <PackageVersion Include="Akka.Cluster.Hosting" Version="1.5.29" />
+    <PackageVersion Include="Akka.Cluster.Hosting" Version="1.5.30" />
     <PackageVersion Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
     <PackageVersion Include="Akka.Persistence.Sql.Hosting" Version="1.5.30" />
     <PackageVersion Include="Akka.Remote.Hosting" Version="$(AkkaHostingVersion)" />
