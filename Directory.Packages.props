@@ -5,7 +5,7 @@
   <PropertyGroup Label="Dependencies">
     <PbmVersion>1.4.0</PbmVersion>
     <AkkaVersion>1.5.30</AkkaVersion>
-    <AkkaHostingVersion>1.5.30</AkkaHostingVersion>
+    <AkkaHostingVersion>1.5.30.1</AkkaHostingVersion>
   </PropertyGroup>
   <!-- Akka.NET Package Versions -->
   <ItemGroup>
