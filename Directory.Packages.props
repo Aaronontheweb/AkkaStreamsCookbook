@@ -4,12 +4,12 @@
   </PropertyGroup>
   <PropertyGroup Label="Dependencies">
     <PbmVersion>1.4.0</PbmVersion>
-    <AkkaVersion>1.5.31</AkkaVersion>
-    <AkkaHostingVersion>1.5.31</AkkaHostingVersion>
+    <AkkaVersion>1.5.37</AkkaVersion>
+    <AkkaHostingVersion>1.5.37</AkkaHostingVersion>
   </PropertyGroup>
   <!-- Akka.NET Package Versions -->
   <ItemGroup>
-    <PackageVersion Include="Akka.Cluster.Hosting" Version="1.5.30" />
+    <PackageVersion Include="Akka.Cluster.Hosting" Version="1.5.37" />
     <PackageVersion Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
     <PackageVersion Include="Akka.Persistence.Sql.Hosting" Version="1.5.30" />
     <PackageVersion Include="Akka.Remote.Hosting" Version="$(AkkaHostingVersion)" />
