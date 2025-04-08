@@ -38,8 +38,8 @@ public sealed class MetricAggregator : ReceiveActor
     private readonly IMaterializer _materializer = Context.Materializer();
 
     private readonly SubscriberId _subscriberId;
-    private Sink<MetricEvent, NotUsed> _finalSink;
-    private ChannelReader<MetricEvent> _metricsReader;
+    private Sink<MetricEvent, NotUsed>? _finalSink;
+    private ChannelReader<MetricEvent>? _metricsReader;
 
     public MetricAggregator(string subscriberId)
     {

@@ -26,8 +26,8 @@ hostBuilder.ConfigureLogging(builder => { builder.AddConsole(); });
 hostBuilder.ConfigureServices((context, services) =>
 {
     // extract the initial contact points from config
-    var initialContacts = context.Configuration.GetSection("Akka:ClusterClientSettings:InitialContacts")
-        .Get<string[]>()
+    var initialContacts = (context.Configuration.GetSection("Akka:ClusterClientSettings:InitialContacts")
+            .Get<string[]>() ?? throw new InvalidOperationException())
         .Select(Address.Parse)
         .ToArray();
     
