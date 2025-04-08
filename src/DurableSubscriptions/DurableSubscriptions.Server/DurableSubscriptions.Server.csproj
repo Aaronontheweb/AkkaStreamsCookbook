@@ -7,21 +7,22 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\DurableSubscriptions.Shared\DurableSubscriptions.Shared.csproj" />
+        <ProjectReference Include="..\DurableSubscriptions.Shared\DurableSubscriptions.Shared.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Akka.Cluster.Hosting" />
-      <PackageReference Include="Akka.Persistence.Sql.Hosting" />
-      <PackageReference Include="Bogus" />
-      <PackageReference Include="Npgsql" />
+        <PackageReference Include="Microsoft.Extensions.Hosting"/>
+        <PackageReference Include="Akka.Cluster.Hosting"/>
+        <PackageReference Include="Akka.Persistence.Sql.Hosting"/>
+        <PackageReference Include="Bogus"/>
+        <PackageReference Include="Npgsql"/>
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="appsettings.json" />
-      <Content Include="appsettings.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
+        <None Remove="appsettings.json"/>
+        <Content Include="appsettings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
 </Project>

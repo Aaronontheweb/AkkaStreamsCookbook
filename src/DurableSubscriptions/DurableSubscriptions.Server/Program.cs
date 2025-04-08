@@ -43,7 +43,7 @@ hostBuilder.ConfigureServices((context, services) =>
             .WithRemoting(new RemoteOptions { Port = 9914, HostName = "localhost" })
             .WithClustering(new ClusterOptions()
                 { SeedNodes = ["akka.tcp://DurableSubs@localhost:9914"], Roles = ["subscriptions"] })
-            .WithSqlPersistence(connectionString, ProviderName.PostgreSQL, tagStorageMode: TagMode.TagTable,
+            .WithSqlPersistence(connectionString!, ProviderName.PostgreSQL, tagStorageMode: TagMode.TagTable,
                 journalBuilder: (j) =>
                     j.AddWriteEventAdapter<ProductEventsTagger>("product-events-tagger",
                         new[] { typeof(IProductEvent) }))
