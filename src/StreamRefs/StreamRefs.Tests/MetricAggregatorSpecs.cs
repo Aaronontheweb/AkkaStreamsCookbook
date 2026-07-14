@@ -3,10 +3,8 @@ using Akka.Hosting;
 using Akka.Hosting.TestKit;
 using Akka.Streams;
 using Akka.Streams.Dsl;
-using FluentAssertions;
 using StreamRefs.MetricsCollector.Actors;
 using StreamRefs.Shared;
-using Xunit.Abstractions;
 
 namespace StreamRefs.Tests;
 
@@ -20,7 +18,7 @@ public class MetricAggregatorSpecs : TestKit
     public async Task ShouldReceiveMetricAggregatorEvents()
     {
         // arrange
-        var aggregator = await ActorRegistry.GetAsync<MetricAggregator>();
+        var aggregator = await ActorRegistry.GetAsync<MetricAggregator>(TestContext.Current.CancellationToken);
         var metricEvents = new List<MetricEvent>()
         {
             new MetricEvent(new NodeAddress("localhost", 2001), DateTime.UtcNow.Ticks, MetricMeasure.Cpu, 0.5),
@@ -39,10 +37,10 @@ public class MetricAggregatorSpecs : TestKit
         
         // act
         aggregator.Tell(MetricAggregator.RequestMetricsFeed.Instance, TestActor);
-        var metricFeed = await ExpectMsgAsync<MetricAggregator.MetricsFeed>();
-        
+        var metricFeed = await ExpectMsgAsync<MetricAggregator.MetricsFeed>(cancellationToken: TestContext.Current.CancellationToken);
+
         aggregator.Tell(new MetricCommands.PushMetrics(new SubscriberId("fake"), new NodeAddress("localhost", 2001), sourceRef));
-        await ExpectMsgAsync<MetricCommands.ReceivingMetrics>();
+        await ExpectMsgAsync<MetricCommands.ReceivingMetrics>(cancellationToken: TestContext.Current.CancellationToken);
         
         // assert
         // we should be able to receive the same events from the aggregator
@@ -52,11 +50,11 @@ public class MetricAggregatorSpecs : TestKit
         // read two events only (channel does not terminate)
         for (var i = 0; i < 2; i++)
         {
-            var next = await reader.ReadAsync();
+            var next = await reader.ReadAsync(TestContext.Current.CancellationToken);
             actualEvents.Add(next);
         }
         
-        actualEvents.Should().BeEquivalentTo(metricEvents);
+        Assert.Equivalent(metricEvents, actualEvents);
     }
 
     protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
