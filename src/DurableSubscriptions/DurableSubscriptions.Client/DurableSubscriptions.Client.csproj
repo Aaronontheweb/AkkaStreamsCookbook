@@ -9,6 +9,7 @@
     <ItemGroup>
       <PackageReference Include="Akka.Cluster.Hosting" />
       <PackageReference Include="Microsoft.Extensions.Hosting" />
+      <PackageReference Include="OpenTelemetry" />
       <PackageReference Include="Spectre.Console.Cli" />
     </ItemGroup>
 

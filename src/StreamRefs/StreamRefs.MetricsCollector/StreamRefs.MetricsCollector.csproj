@@ -8,12 +8,13 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.Hosting" />
-        <PackageReference Include="Akka.Hosting"/>
-        <PackageReference Include="Akka.Remote.Hosting"/>
-        <PackageReference Include="Spectre.Console.Cli"/>
+        <PackageReference Include="Akka.Hosting" />
+        <PackageReference Include="Akka.Remote.Hosting" />
+        <PackageReference Include="OpenTelemetry" />
+        <PackageReference Include="Spectre.Console.Cli" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\StreamRefs.Shared\StreamRefs.Shared.csproj"/>
+        <ProjectReference Include="..\StreamRefs.Shared\StreamRefs.Shared.csproj" />
     </ItemGroup>
 </Project>

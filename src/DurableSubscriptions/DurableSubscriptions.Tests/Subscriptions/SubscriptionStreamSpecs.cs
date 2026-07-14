@@ -5,10 +5,8 @@
 // -----------------------------------------------------------------------
 
 using Akka.Streams.Dsl;
-using Akka.TestKit.Xunit2;
+using Akka.TestKit.Xunit;
 using DurableSubscriptions.Server.Actors;
-using FluentAssertions;
-using Xunit.Abstractions;
 
 namespace DurableSubscriptions.Tests.Subscriptions;
 
@@ -34,6 +32,6 @@ public class SubscriptionStreamSpecs : TestKit
         var result = await combined.RunWith(Sink.Seq<int>(), Sys);
         
         // assert
-        result.Should().BeEquivalentTo(Enumerable.Range(0, sourceCount));
+        Assert.Equivalent(Enumerable.Range(0, sourceCount), result);
     }
 }
